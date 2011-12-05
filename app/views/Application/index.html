@@ -1,4 +1,23 @@
 #{extends 'main.html' /}
-#{set title:'Home' /}
+#{set title:'TLM FCA History' /}
 
-#{welcome /}
+PCA Program:
+
+<form action="@{Application.index()}" method="GET">
+    <input type="text" name="programName" value="${programName ?: 'MRCPSO06'}" /> 
+    <input type="submit" value="Search" />
+</form>
+
+#{if results != null && results.isEmpty()}
+	No matching programs found.
+#{/if}
+
+#{if results}
+	<table>
+	#{list items:results, as:'pcaProgram' }
+        <tr>
+        	<td>${pcaProgram.name}</td><td>${pcaProgram.author}</td><td>${pcaProgram.description}</td>
+        </tr>
+    #{/list}
+    </table>
+#{/if}

@@ -1,0 +1,35 @@
+#{extends 'main.html' /}
+#{set title:'GIT Repository Configuration' /}
+
+%{ 
+	repoName = currentRepository == null ? 'NA' : currentRepository.name;
+	repoPath = currentRepository == null ? '' : currentRepository.location;
+	lastCommit = currentRepository == null ? 'NA' : currentRepository.lastCommitParsed;
+	disableAction = status == 'Working...';
+}%
+
+<p>
+    Last commit: ${lastCommit}
+    <br/>
+</p>
+
+<h3>Repository</h3>
+<form action="@{Repository.changeRepository()}" method="POST">
+	<table>
+   		<tr><td>Name:</td><td><input type="text" name="repositoryName" value="${repoName}" /></td></tr> 
+    	<tr><td>Path:</td><td><input type="text" name="repositoryPath" value="${repoPath}" /></td></tr>
+    </table>
+    <input type="submit" value="Change" ${disableAction ? 'disabled=true' : ''}"/>
+</form>
+
+#{if currentRepository}
+<h3>Actions</h3>
+Status: ${status}
+<form action="@{Repository.update()}" method="POST">
+    <input type="submit" value="Update" ${disableAction ? 'disabled=true' : ''}"/>
+</form>
+
+<form action="@{Repository.wipe()}" method="POST">
+    <input type="submit" value="Wipe" ${disableAction ? 'disabled=true' : ''}"/>
+</form>
+#{/if}
