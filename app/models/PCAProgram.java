@@ -1,23 +1,33 @@
 package models;
 
-import play.*;
-import play.db.jpa.*;
+import java.util.List;
 
-import javax.persistence.*;
-import java.util.*;
+import javax.persistence.Entity;
+import javax.persistence.OneToMany;
+
+import play.db.jpa.Model;
 
 @Entity
 public class PCAProgram extends Model {
-	
-	public String name;
-	public String description;
-	public String author;
-	
-	public PCAProgram(String name, String description, String author) {
-		this.name = name;
-		this.description = description;
-		this.author = author;
-		
-	}
-    
+
+    public String name;
+    public String description;
+    public String author;
+    public Integer svnRevision;
+
+    @OneToMany(mappedBy = "program", orphanRemoval = true)
+    public List<PCAProgramClassLink> javaLinks;
+
+    public PCAProgram(final String name, final String description, final String author) {
+        this.name = name;
+        this.description = description;
+        this.author = author;
+
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
 }

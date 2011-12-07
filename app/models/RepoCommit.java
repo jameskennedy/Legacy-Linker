@@ -6,6 +6,7 @@ import java.util.Date;
 
 import javax.persistence.Entity;
 import javax.persistence.Lob;
+import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 
 import org.apache.commons.lang.StringUtils;
@@ -33,13 +34,15 @@ public class RepoCommit extends Model {
     public String message;
     @Required
     public Date date;
+    @ManyToOne
+    public PCAProgram program;
 
     public static SimpleDateFormat DF = new SimpleDateFormat("E MMM d HH:mm:ss yyyy Z");
 
     public RepoCommit(final Commit gitCommit) throws ParseException {
         sha = gitCommit.getSha();
         author = gitCommit.getAuthor();
-        message = gitCommit.getMessage().trim();
+        message = gitCommit.getMessage() == null ? "[No message]" : gitCommit.getMessage().trim();
         parseSVNRevision();
         // Expecting format: Sat Dec 3 23:58:57 2011 +0000
         date = DF.parse(gitCommit.getDateString());

@@ -1,0 +1,18 @@
+
+
+#historyPanel {
+	width: 30%;
+}
+
+#linkPanel {
+	font-family: monaco,courier;
+	font-size: 10pt;
+}
+
+.number {
+	text-align: right;
+}
+
+.indirect {
+	color: #777;
+}

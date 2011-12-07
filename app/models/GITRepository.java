@@ -8,22 +8,19 @@ import play.db.jpa.Model;
 @Entity
 public class GITRepository extends Model {
 
-	private static final Long MAIN_REPO_ID = 1L;
+    public String name;
 
-	public String name;
+    @Unique
+    public String location;
+    public String lastCommitParsed;
 
-	@Unique
-	public String location;
-	public String lastCommitParsed;
-
-	public static synchronized GITRepository getMainRepository() {
-		GITRepository currentRepo = GITRepository.findById(MAIN_REPO_ID);
-		if (null == currentRepo) {
-			currentRepo = new GITRepository();
-			currentRepo.id = MAIN_REPO_ID;
-			currentRepo.save();
-		}
-		return currentRepo;
-	}
-
+    public static synchronized GITRepository getMainRepository() {
+        try {
+            return (GITRepository) GITRepository.findAll().get(0);
+        } catch (IndexOutOfBoundsException e) {
+            GITRepository newRepo = new GITRepository();
+            newRepo.save();
+            return newRepo;
+        }
+    }
 }
