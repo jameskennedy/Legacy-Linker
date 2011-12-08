@@ -14,6 +14,8 @@ public class GITRepository extends Model {
     public String location;
     public String lastCommitParsed;
 
+    public Integer svnRevision;
+
     public static synchronized GITRepository getMainRepository() {
         try {
             return (GITRepository) GITRepository.findAll().get(0);

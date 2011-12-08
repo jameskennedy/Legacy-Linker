@@ -6,36 +6,61 @@
 
 <div id="headerPanel">
 	<table>
-		<tr><td>SVN Revision:</td><td>${program.svnRevision}</td></tr>
-		<tr><td>Java References:</td><td>${program.javaLinks.size()}</td></tr>
+		<tr><td>Current as of SVN Revision:</td><td>${repository.svnRevision}</td></tr>
 	</table>
 
 </div>
 
 
-<table width="100%">
+<table class="content">
 	<tr>
 	
-	<td id="historyPanel">
-	</td>
-	
 	<td id ="linkPanel">
-		<table>
+		<h2>Legacy Code Coverage</h2>
+		<p class="explanation">
+			This list of Java code is based on the @legacy annotations that reference ${program.name}.
+			Because developers use the @legacy inconsistently the line coverage calculation is not fully accurate.
+		</p>
+		<table class="code">
 			#{list items:linkList, as:'link' }
+				%{ 
+					classTip = link.indirect ? "Not linked via @legacy annotation.\n" : "";
+					classTip = classTip + link.getFullyQualifiedClassName();
+				}%
+			
 	        	<tr>
-	        		<td>${link.linkLines}/${link.lineTotal}</td>
-	        		<td #{if link.indirect}class="indirect"#{/if}>${link.className}</td>
-	        		<td>${link.linkLines / link.lineTotal * 100}%</td>
+	        		<td><input type="checkbox" name="file_${link.file.id}"/></td>
+	        		<td title="Line coverage ${link.lineCoverage()}%">${link.linkLines}/${link.lineTotal}</td>
+	        		<td #{if link.indirect}class="indirect"#{/if} title="${classTip}">${link.className}</td>
 	        	</tr>
 	        	#{list items:link.methodLinks, as:'method' }
 	        	<tr>
-	        		<td class="number">${method.lineTotal}</td>
-	        		<td class="number">${method.startLine}</td>
-	        		<td>${method.methodName}()</td>
+	        		<td></td>
+	        		<td class="number" title="Lines in method">${method.lineTotal}</td>
+	        		<td class="methodName" title="Line ${method.startLine}">${method.methodName}()</td>
 	        	</tr>
 	    		#{/list}
 	    	#{/list}
 	    </table>
+	</td>
+	
+	<td id="historyPanel">
+		<h2>Commit History</h2>
+		<p class="explanation">
+			This is a chronological list of commits that pertain to the selected classes on the left.
+			Use the checkboxes to select which class commits to include.<br/>
+			Note: At present parse errors cause some commit messages to be blank.
+		</p>
+		#{list items:commits, as: 'commit' }
+		  <div class="commitPanel">
+		  	<div class="commitHeader">
+		  		 <table width="100%">
+		  		 	<tr><td width="100px">${commit.date}</td><td>Rev ${commit.svnRevision}</td><td class="commitAuthor">${commit.author}</td></tr>
+		  		 </table>
+		  	</div>
+		  	<div class="commitBody">${commit.message}</div>
+		  </div>
+		#{/list}
 	</td>
 	
 	</tr>

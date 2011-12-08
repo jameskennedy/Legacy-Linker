@@ -1,12 +1,55 @@
 
+table {
+	border-collapse: collapse;
+}
 
-#historyPanel {
-	width: 30%;
+table.content {
+	width:100%;
+}
+
+table.content td {
+	vertical-align: top;
 }
 
 #linkPanel {
+	width: 20%;
+}
+
+#historyPanel {
+	padding: 0px 20px 20px 20px;
+}
+
+.code {
 	font-family: monaco,courier;
 	font-size: 10pt;
+}
+
+.commitPanel {
+}
+
+.commitHeader {
+	font-size: 10pt;
+	background: #aaccee;
+	padding: 2px;
+}
+
+.commitBody {
+	background: #eee5e0;
+	padding: 0.5em;
+}
+
+.commitAuthor {
+	text-align: right;
+}
+
+.methodName {
+	font-sie: 80%;
+	padding-left: 2em;	
+}
+
+.explanation {
+	font-size: 10pt;
+	height: 4em;
 }
 
 .number {

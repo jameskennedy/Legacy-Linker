@@ -41,25 +41,21 @@ public class PCALinkageService {
     private static Pattern COMMIT_PROGRAM = Pattern.compile("([a-zA-Z][a-zA-Z0-9]{2,7})");
 
     @NoTransaction
-    public static void updateFileLinkage(final GITRepository repo, final Set<String> files) {
-        for (String path : files) {
-            if (!path.endsWith(".java")) {
-                Logger.debug("Ignoring file %s", path);
-                continue;
-            }
+    public static void updateFileLinkage(final GITRepository repo, final Set<RepoFile> files) {
+        int filesToProcess = files.size();
+        int filesProcessed = 0;
+        for (RepoFile repoFile : files) {
+            filesProcessed++;
 
-            RepoFile repoFile = RepoFile.find("byRepositoryAndPath", repo, path).first();
-            if (null == repoFile) {
-                repoFile = new RepoFile(repo, path);
-                repoFile.save();
-            } else {
-                PCAProgramClassLink.delete("file = ?", repoFile);
-            }
+            // Drop all existing links
+            PCAProgramClassLink.delete("file = ?", repoFile);
 
-            File file = new File(repoFile.getAbsolutePath());
+            String path = repoFile.getAbsolutePath();
+            File file = new File(path);
 
             if (!file.exists()) {
-                Logger.debug("Unlinked deleted repository file %s", file.getAbsoluteFile());
+                Logger.debug("[%d/%d] Unlinked deleted repository file %s", filesProcessed, filesToProcess,
+                                file.getAbsoluteFile());
                 continue;
             }
 
@@ -67,7 +63,7 @@ public class PCALinkageService {
 
             List<TypeDeclaration> types = cu.getTypes();
             if (null == types) {
-                Logger.warn("File %s has no type declaration.", path);
+                Logger.warn("[%d/%d] File %s has no type declaration.", filesProcessed, filesToProcess, path);
                 continue;
             }
 
@@ -100,76 +96,99 @@ public class PCALinkageService {
 
                         classProgramTable.put(programName, classLink);
 
-                        Logger.debug("Linked class %s", classLink);
+                        Logger.debug("[%d/%d] Linked class %s", filesProcessed, filesToProcess, classLink);
                     }
                 } else {
+                    Logger.debug("[%d/%d] Ignoring type %s", filesProcessed, filesToProcess, type.getName());
                     continue;
                 }
 
                 int numClazzLinks = classProgramTable.size();
 
+                List<MethodDeclaration> methods = new ArrayList<MethodDeclaration>();
                 List<BodyDeclaration> members = type.getMembers();
-                if (null == members) {
+                if (null != members) {
+                    for (BodyDeclaration member : members) {
+                        if (member instanceof MethodDeclaration) {
+                            methods.add((MethodDeclaration) member);
+                        }
+                    }
+                }
+                if (methods.isEmpty()) {
+                    if (classProgramTable.isEmpty()) {
+                        Logger.debug("[%d/%d] No @legacy references found in class %s", filesProcessed, filesToProcess,
+                                        clazz.getName());
+                    }
                     continue;
                 }
 
                 int linesAccountedFor = 0;
-                for (BodyDeclaration member : members) {
-                    if (member instanceof MethodDeclaration) {
-                        MethodDeclaration method = (MethodDeclaration) member;
-                        int methodLineTotal = method.getEndLine() - method.getBeginLine() + 1;
-                        JavadocComment javaDoc = method.getJavaDoc();
-                        List<String> legacyProgramRefs = parseLegacyPrograms(javaDoc == null ? null : javaDoc
-                                        .getContent());
+                List<PCAProgramMethodLink> newMethodLinks = new ArrayList<PCAProgramMethodLink>();
+                for (MethodDeclaration member : methods) {
+                    MethodDeclaration method = member;
+                    int methodLineTotal = method.getEndLine() - method.getBeginLine() + 1;
+                    JavadocComment javaDoc = method.getJavaDoc();
+                    List<String> legacyProgramRefs = parseLegacyPrograms(javaDoc == null ? null : javaDoc.getContent());
 
-                        Set<String> alreadyProcessed = new HashSet<String>();
-                        for (String programName : legacyProgramRefs) {
-                            if (alreadyProcessed.contains(programName)) {
-                                continue;
-                            }
-                            alreadyProcessed.add(programName);
+                    Set<String> alreadyProcessed = new HashSet<String>();
+                    for (String programName : legacyProgramRefs) {
+                        if (alreadyProcessed.contains(programName)) {
+                            continue;
+                        }
+                        alreadyProcessed.add(programName);
 
-                            PCAProgram program = PCAProgram.find("byName", programName).first();
-                            if (null == program) {
-                                program = new PCAProgram(programName, null, author);
-                                program.save();
-                            }
-
-                            PCAProgramMethodLink methodLink = new PCAProgramMethodLink();
-                            methodLink.program = program;
-                            methodLink.file = repoFile;
-                            methodLink.className = clazz.getName();
-                            methodLink.methodName = method.getName();
-                            methodLink.lineTotal = methodLineTotal;
-                            methodLink.linkLines = methodLink.lineTotal;
-                            methodLink.startLine = method.getBeginLine();
-                            methodLink.classLink = classProgramTable.get(programName);
-                            if (null == methodLink.classLink) {
-                                methodLink.classLink = indirectClassProgramTable.get(programName);
-                            }
-                            if (null == methodLink.classLink) {
-                                methodLink.classLink = new PCAProgramClassLink();
-                                methodLink.classLink.indirect = true;
-                                methodLink.classLink.file = repoFile;
-                                methodLink.classLink.program = program;
-                                methodLink.classLink.className = clazz.getName();
-                                methodLink.classLink.lineTotal = classLineCount;
-                                methodLink.classLink.linkLines = 0;
-                                indirectClassProgramTable.put(programName, methodLink.classLink);
-                            }
-                            methodLink.classLink.linkLines += methodLink.linkLines;
-
-                            Logger.debug("Linked  method %s", methodLink);
-                            if (!methodLink.isPersistent()) {
-                                methodLink.classLink.save();
-                            }
-                            methodLink.save();
+                        PCAProgram program = PCAProgram.find("byName", programName).first();
+                        if (null == program) {
+                            program = new PCAProgram(programName, null, author);
+                            program.save();
                         }
 
-                        if (!alreadyProcessed.isEmpty()) {
-                            linesAccountedFor += methodLineTotal;
+                        PCAProgramMethodLink methodLink = new PCAProgramMethodLink();
+                        methodLink.program = program;
+                        methodLink.file = repoFile;
+                        methodLink.className = clazz.getName();
+                        methodLink.methodName = method.getName();
+                        methodLink.lineTotal = methodLineTotal;
+                        methodLink.linkLines = methodLink.lineTotal;
+                        methodLink.startLine = method.getBeginLine();
+                        methodLink.classLink = classProgramTable.get(programName);
+                        if (null == methodLink.classLink) {
+                            methodLink.classLink = indirectClassProgramTable.get(programName);
                         }
+                        if (null == methodLink.classLink) {
+                            methodLink.classLink = new PCAProgramClassLink();
+                            methodLink.classLink.indirect = true;
+                            methodLink.classLink.file = repoFile;
+                            methodLink.classLink.program = program;
+                            methodLink.classLink.className = clazz.getName();
+                            methodLink.classLink.lineTotal = classLineCount;
+                            methodLink.classLink.linkLines = 0;
+                            indirectClassProgramTable.put(programName, methodLink.classLink);
+                        }
+                        methodLink.classLink.linkLines += methodLink.linkLines;
+
+                        Logger.debug("Linked  method %s", methodLink);
+                        if (!methodLink.isPersistent()) {
+                            methodLink.classLink.save();
+                        }
+
+                        newMethodLinks.add(methodLink);
+                        methodLink.save();
                     }
+
+                    if (!alreadyProcessed.isEmpty()) {
+                        linesAccountedFor += methodLineTotal;
+                    }
+                }
+
+                for (PCAProgramClassLink classLink : indirectClassProgramTable.values()) {
+                    Logger.debug("[%d/%d] Indirectly Linked class %s", filesProcessed, filesToProcess, classLink);
+                }
+
+                if (classProgramTable.isEmpty() && newMethodLinks.isEmpty()) {
+                    Logger.debug("[%d/%d] No @legacy references found in class %s", filesProcessed, filesToProcess,
+                                    clazz.getName());
+                    continue;
                 }
 
                 if (0 < numClazzLinks) {

@@ -41,6 +41,13 @@ public class PCAProgramClassLink extends Model implements Comparable<PCAProgramC
         return program + " <- " + className;
     }
 
+    public String getFullyQualifiedClassName() {
+        String fqName = file.path;
+        int index = fqName.lastIndexOf(".");
+        fqName = fqName.substring(0, index);
+        return fqName.replace(".", "/");
+    }
+
     @Override
     public int compareTo(final PCAProgramClassLink other) {
         if (null == other) {
@@ -55,4 +62,11 @@ public class PCAProgramClassLink extends Model implements Comparable<PCAProgramC
 
     }
 
+    public float lineCoverage() {
+        if (lineTotal == 0) {
+            return 0f;
+        }
+
+        return Math.round(10000f * linkLines / lineTotal) / 100;
+    }
 }

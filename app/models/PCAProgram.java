@@ -13,7 +13,6 @@ public class PCAProgram extends Model {
     public String name;
     public String description;
     public String author;
-    public Integer svnRevision;
 
     @OneToMany(mappedBy = "program", orphanRemoval = true)
     public List<PCAProgramClassLink> javaLinks;

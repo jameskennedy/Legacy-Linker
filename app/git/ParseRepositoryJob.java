@@ -3,13 +3,16 @@ package git;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import models.GITRepository;
 import models.RepoCommit;
+import models.RepoFile;
 import play.Logger;
+import play.db.jpa.NoTransaction;
 import play.jobs.Job;
 import services.PCALinkageService;
 import edu.nyu.cs.javagit.api.DotGit;
@@ -21,7 +24,10 @@ import edu.nyu.cs.javagit.api.commands.GitLogResponse.CommitFile;
 public class ParseRepositoryJob extends Job {
 
     @Override
+    @NoTransaction
     public void doJob() {
+        long startTime = System.currentTimeMillis();
+
         GITRepository repo = GITRepository.findById(GITRepository.getMainRepository().getId());
 
         if (repo.location == null) {
@@ -50,7 +56,7 @@ public class ParseRepositoryJob extends Job {
         }
 
         // TODO: DEBUG
-        // gitLogOptions.setOptLimitCommitMax(true, 200);
+        gitLogOptions.setOptLimitCommitMax(true, 80);
 
         List<Commit> commitList = null;
         try {
@@ -63,13 +69,22 @@ public class ParseRepositoryJob extends Job {
         }
 
         int newCommits = 0;
-        Set<String> filesCommitted = new HashSet<String>();
+
+        // Using sorted set t o access files more contiguously.
+        Set<RepoFile> filesCommitted = new TreeSet<RepoFile>();
+
         for (Commit commit : commitList) {
             try {
-                boolean processed = processCommit(commit, filesCommitted);
-                if (processed) {
-                    newCommits++;
+                RepoCommit processed = processCommit(commit, filesCommitted, repo);
+                if (processed == null) {
+                    continue;
                 }
+
+                newCommits++;
+                if (repo.svnRevision == null || (repo.svnRevision < processed.svnRevision)) {
+                    repo.svnRevision = processed.svnRevision;
+                }
+
                 repo.lastCommitParsed = commit.getSha();
             } catch (ParseException e) {
                 Logger.error(e, "Failed to parse commit %s", commit.getSha());
@@ -83,22 +98,41 @@ public class ParseRepositoryJob extends Job {
 
         PCALinkageService.updateFileLinkage(repo, filesCommitted);
 
-        Logger.info("Synchronization complete.");
+        long endTime = System.currentTimeMillis();
+        long jobTime = (endTime - startTime) / 1000;
+        Logger.info("Synchronization complete. Took " + jobTime + " seconds.");
     }
 
-    boolean processCommit(final Commit commit, final Set<String> filesCommitted) throws ParseException {
+    RepoCommit processCommit(final Commit commit, final Set<RepoFile> filesCommitted, final GITRepository repo)
+                    throws ParseException {
         Logger.debug("%s %s", commit.getDateString(), commit.getAuthor());
         RepoCommit repoCommit = RepoCommit.find("bySha", commit.getSha()).first();
         if (null == repoCommit) {
             repoCommit = new RepoCommit(commit);
             if (!repoCommit.sharedInRemoteRepository()) {
                 // Skip commits that local only and may still change
-                return false;
+                return null;
             }
 
             if (commit.getFiles() != null) {
                 for (CommitFile commitFile : commit.getFiles()) {
-                    filesCommitted.add(commitFile.getName());
+                    String path = commitFile.getName();
+
+                    if (!path.endsWith(".java")) {
+                        Logger.trace("Ignoring file %s", path);
+                        continue;
+                    }
+
+                    RepoFile repoFile = RepoFile.find("byRepositoryAndPath", repo, path).first();
+                    if (null == repoFile) {
+                        repoFile = new RepoFile(repo, path);
+                        repoFile.commits = new ArrayList<RepoCommit>();
+                        repoFile.save();
+                    }
+
+                    // Associate the commit
+                    repoFile.commits.add(repoCommit);
+                    filesCommitted.add(repoFile);
                 }
             }
 
@@ -106,9 +140,9 @@ public class ParseRepositoryJob extends Job {
 
             PCALinkageService.linkCommitToPrograms(repoCommit);
 
-            return true;
+            return repoCommit;
         }
 
-        return false;
+        return null;
     }
 }
