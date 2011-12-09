@@ -5,6 +5,7 @@ import japa.parser.ParseException;
 import japa.parser.ast.CompilationUnit;
 import japa.parser.ast.body.BodyDeclaration;
 import japa.parser.ast.body.ClassOrInterfaceDeclaration;
+import japa.parser.ast.body.EnumDeclaration;
 import japa.parser.ast.body.JavadocComment;
 import japa.parser.ast.body.MethodDeclaration;
 import japa.parser.ast.body.TypeDeclaration;
@@ -75,7 +76,7 @@ public class PCALinkageService {
                 Map<String, PCAProgramClassLink> classProgramTable = new HashMap<String, PCAProgramClassLink>();
                 Map<String, PCAProgramClassLink> indirectClassProgramTable = new HashMap<String, PCAProgramClassLink>();
 
-                if (type instanceof ClassOrInterfaceDeclaration) {
+                if (type instanceof ClassOrInterfaceDeclaration || type instanceof EnumDeclaration) {
                     clazz = (ClassOrInterfaceDeclaration) type;
                     classLineCount = clazz.getEndLine() - clazz.getBeginLine() + 1;
                     JavadocComment javaDoc = clazz.getJavaDoc();
