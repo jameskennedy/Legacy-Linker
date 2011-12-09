@@ -3,6 +3,9 @@
 #{set 'moreStyles'}
 <link rel="stylesheet" media="screen" href="@{'/public/stylesheets/showProgram.css'}">  
 #{/set}
+#{set 'moreScripts'}
+<script type="text/javascript" src="@{'/public/javascripts/showProgram.js'}"></script>
+#{/set}
 
 <div id="headerPanel">
 	<table>
@@ -47,21 +50,28 @@
 	<td id="historyPanel">
 		<h2>Commit History</h2>
 		<p class="explanation">
-			This is a chronological list of commits that pertain to the selected classes on the left.
-			Use the checkboxes to select which class commits to include.<br/>
-			Note: At present parse errors cause some commit messages to be blank.
+			This is a chronological list of commits that MAY be relevant to the selected classes on the left.
+			Use the checkboxes to select which classes to include.<br/>
 		</p>
-		#{list items:commits, as: 'commit' }
-		  <div class="commitPanel">
-		  	<div class="commitHeader">
-		  		 <table width="100%">
-		  		 	<tr><td width="100px">${commit.date}</td><td>Rev ${commit.svnRevision}</td><td class="commitAuthor">${commit.author}</td></tr>
-		  		 </table>
-		  	</div>
-		  	<div class="commitBody">${commit.message}</div>
-		  </div>
-		#{/list}
+		<hr/>
+		<div id="commitList">
+			Loading commit history...
+		</div>
+		<script type="text/javascript">
+			var getCommits = #{jsAction @relevantCommits(':programName') /};
+			
+			reloadCommits = function() {
+			   $('#commitList').load(getCommits({programName: '${program.name}'}));
+			}
+		
+			document.body.onload = function() {
+				reloadCommits();
+			}
+		</script>
 	</td>
+	
+
+	
 	
 	</tr>
 </table>

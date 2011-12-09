@@ -1,0 +1,10 @@
+#{list items:commits, as: 'commit' }
+  <div class="commitPanel">
+  	<div class="commitHeader">
+  		 <table width="100%">
+  		 	<tr><td width="100px">${commit.date}</td><td>Rev ${commit.svnRevision}</td><td class="commitAuthor">${commit.author}</td></tr>
+  		 </table>
+  	</div>
+  	<div class="commitBody">${commit.message}</div>
+  </div>
+#{/list}

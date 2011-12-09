@@ -39,7 +39,7 @@ import play.db.jpa.NoTransaction;
 public class PCALinkageService {
 
     private static Pattern LEGACY_PROGRAM = Pattern.compile("@legacy[\\s\\t]*([a-zA-Z][a-zA-Z0-9]{2,7})");
-    private static Pattern COMMIT_PROGRAM = Pattern.compile("([a-zA-Z][a-zA-Z0-9]{2,7})");
+    private static Pattern COMMIT_PROGRAM = Pattern.compile("[A-Z][A-Z0-9]{2,7}");
 
     @NoTransaction
     public static void updateFileLinkage(final GITRepository repo, final Set<RepoFile> files) {
@@ -70,16 +70,16 @@ public class PCALinkageService {
 
             String author = null;
             for (TypeDeclaration type : types) {
-                ClassOrInterfaceDeclaration clazz = null;
+                String typeName = null;
                 int classLineCount = 0;
 
                 Map<String, PCAProgramClassLink> classProgramTable = new HashMap<String, PCAProgramClassLink>();
                 Map<String, PCAProgramClassLink> indirectClassProgramTable = new HashMap<String, PCAProgramClassLink>();
 
                 if (type instanceof ClassOrInterfaceDeclaration || type instanceof EnumDeclaration) {
-                    clazz = (ClassOrInterfaceDeclaration) type;
-                    classLineCount = clazz.getEndLine() - clazz.getBeginLine() + 1;
-                    JavadocComment javaDoc = clazz.getJavaDoc();
+                    typeName = type.getName();
+                    classLineCount = type.getEndLine() - type.getBeginLine() + 1;
+                    JavadocComment javaDoc = type.getJavaDoc();
                     List<String> legacyProgramRefs = parseLegacyPrograms(javaDoc == null ? "" : javaDoc.getContent());
                     for (String programName : legacyProgramRefs) {
                         PCAProgram program = PCAProgram.find("byName", programName).first();
@@ -91,7 +91,7 @@ public class PCALinkageService {
                         PCAProgramClassLink classLink = new PCAProgramClassLink();
                         classLink.file = repoFile;
                         classLink.program = program;
-                        classLink.className = clazz.getName();
+                        classLink.className = type.getName();
                         classLink.lineTotal = classLineCount;
                         classLink.linkLines = 0;
 
@@ -118,7 +118,7 @@ public class PCALinkageService {
                 if (methods.isEmpty()) {
                     if (classProgramTable.isEmpty()) {
                         Logger.debug("[%d/%d] No @legacy references found in class %s", filesProcessed, filesToProcess,
-                                        clazz.getName());
+                                        typeName);
                     }
                     continue;
                 }
@@ -147,7 +147,7 @@ public class PCALinkageService {
                         PCAProgramMethodLink methodLink = new PCAProgramMethodLink();
                         methodLink.program = program;
                         methodLink.file = repoFile;
-                        methodLink.className = clazz.getName();
+                        methodLink.className = typeName;
                         methodLink.methodName = method.getName();
                         methodLink.lineTotal = methodLineTotal;
                         methodLink.linkLines = methodLink.lineTotal;
@@ -161,7 +161,7 @@ public class PCALinkageService {
                             methodLink.classLink.indirect = true;
                             methodLink.classLink.file = repoFile;
                             methodLink.classLink.program = program;
-                            methodLink.classLink.className = clazz.getName();
+                            methodLink.classLink.className = typeName;
                             methodLink.classLink.lineTotal = classLineCount;
                             methodLink.classLink.linkLines = 0;
                             indirectClassProgramTable.put(programName, methodLink.classLink);
@@ -188,7 +188,7 @@ public class PCALinkageService {
 
                 if (classProgramTable.isEmpty() && newMethodLinks.isEmpty()) {
                     Logger.debug("[%d/%d] No @legacy references found in class %s", filesProcessed, filesToProcess,
-                                    clazz.getName());
+                                    typeName);
                     continue;
                 }
 
@@ -251,12 +251,15 @@ public class PCALinkageService {
     public static void linkCommitToPrograms(final RepoCommit commit) {
         Matcher matcher = COMMIT_PROGRAM.matcher(commit.message);
 
-        // TODO: Why are some commit messages blank?
         while (matcher.find()) {
-            String programName = matcher.group(1);
+            String programName = matcher.group();
+            System.out.println(programName);
             PCAProgram program = PCAProgram.find("byName", programName).first();
             if (null == program) {
-                continue;
+                // TODO: Avoid creating programs here since there are many false
+                // positives. Pre-load programs elsewhere
+                program = new PCAProgram(programName, null, null);
+                program.save();
             }
 
             commit.program = program;

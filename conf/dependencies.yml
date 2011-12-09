@@ -2,3 +2,13 @@
 
 require:
     - play -> crud
+    - javagit -> javagit 0.2.0-SNAPSHOT
+    
+# My custom repositories
+repositories:
+    
+    - local:
+        type:       local
+        artifact:   "/Users/james.kennedy/.m2/repository/javagit/javagit/0.2.0-SNAPSHOT/[module]-[revision].[ext]"
+        contains:
+            - javagit -> *

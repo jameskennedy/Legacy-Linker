@@ -3,10 +3,10 @@
 
 PCA Program:
 
-<form action="@{Application.index()}" method="GET">
+#{form @Application.index()}
     <input type="text" name="programName" value="${programName ?: 'MRCPSO06'}" /> 
     <input type="submit" value="Search" />
-</form>
+#{/form}
 
 #{if results != null && results.isEmpty()}
 	No matching programs found.

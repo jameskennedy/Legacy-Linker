@@ -103,7 +103,7 @@ public class ParseRepositoryJob extends Job {
         Logger.info("Synchronization complete. Took " + jobTime + " seconds.");
     }
 
-    RepoCommit processCommit(final Commit commit, final Set<RepoFile> filesCommitted, final GITRepository repo)
+    private RepoCommit processCommit(final Commit commit, final Set<RepoFile> filesCommitted, final GITRepository repo)
                     throws ParseException {
         Logger.debug("%s %s", commit.getDateString(), commit.getAuthor());
         RepoCommit repoCommit = RepoCommit.find("bySha", commit.getSha()).first();

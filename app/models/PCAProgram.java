@@ -14,8 +14,9 @@ public class PCAProgram extends Model {
     public String description;
     public String author;
 
-    @OneToMany(mappedBy = "program", orphanRemoval = true)
-    public List<PCAProgramClassLink> javaLinks;
+    @OneToMany(mappedBy = "program") public List<PCAProgramClassLink> javaLinks;
+
+    @OneToMany(mappedBy = "program") public List<RepoCommit> commitLinks;
 
     public PCAProgram(final String name, final String description, final String author) {
         this.name = name;
