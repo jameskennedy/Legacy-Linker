@@ -35,6 +35,8 @@ public class ParseRepositoryJob extends Job {
             return;
         }
 
+        PCALinkageService.loadProgramsFromDisk(new File("/Users/james.kennedy/Documents/workspace/MartensSource"));
+
         Logger.info("Synchronizing history with %s...", repo.location);
 
         File repositoryDirectory = new File(repo.location);
@@ -51,12 +53,11 @@ public class ParseRepositoryJob extends Job {
 
         // TODO: How come this doesn't work?
         if (repo.lastCommitParsed != null) {
-            // gitLogOptions.setOptLimitCommitSince(true,
-            // repo.lastCommitParsed);
+            gitLogOptions.setOptLimitCommitSince(true, repo.lastCommitParsed);
         }
 
         // TODO: DEBUG
-        gitLogOptions.setOptLimitCommitMax(true, 80);
+        gitLogOptions.setOptLimitCommitMax(true, 1000);
 
         List<Commit> commitList = null;
         try {

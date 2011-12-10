@@ -12,7 +12,7 @@ table.content td {
 }
 
 #linkPanel {
-	width: 20%;
+	width: 40%;
 }
 
 #historyPanel {
@@ -25,16 +25,23 @@ table.content td {
 }
 
 .commitPanel {
+	border: solid 1px black;
+	border-bottom: none;
+}
+
+
+.commitPanel.lastEntry {
+	border-bottom: solid 1px black;
 }
 
 .commitHeader {
 	font-size: 10pt;
-	background: #aaccee;
+	background: #aaddef;
 	padding: 2px;
 }
 
 .commitBody {
-	background: #eee5e0;
+	background: #eeeae0;
 	padding: 0.5em;
 }
 

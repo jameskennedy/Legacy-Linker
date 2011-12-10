@@ -1,8 +1,12 @@
+#{if commits.isEmpty()}
+	No commits linked to this program.
+#{/if}
+
 #{list items:commits, as: 'commit' }
-  <div class="commitPanel">
-  	<div class="commitHeader">
+  <div class="commitPanel ${commit_isLast ? 'lastEntry' : ''}">
+  	<div class="commitHeader" title="${commit.getToolTip()}">
   		 <table width="100%">
-  		 	<tr><td width="100px">${commit.date}</td><td>Rev ${commit.svnRevision}</td><td class="commitAuthor">${commit.author}</td></tr>
+  		 	<tr><td width="150px">${commit.date}</td><td>Rev ${commit.svnRevision}</td><td>+ ${commit.linesAdded}</td><td>- ${commit.linesRemoved}</td><td class="commitAuthor">${commit.author}</td></tr>
   		 </table>
   	</div>
   	<div class="commitBody">${commit.message}</div>

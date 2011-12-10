@@ -2,7 +2,6 @@ package services;
 
 import java.util.List;
 
-import models.PCAProgram;
 import models.PCAProgramClassLink;
 import models.RepoCommit;
 import models.RepoFile;
@@ -12,7 +11,6 @@ public class RepositoryService {
 
     public static void wipeRepositoryData() {
         PCAProgramClassLink.deleteAll();
-        PCAProgram.deleteAll();
         List<RepoFile> allRepoFiles = RepoFile.findAll();
         for (RepoFile repoFile : allRepoFiles) {
             repoFile.commits.clear();
@@ -20,6 +18,7 @@ public class RepositoryService {
         }
         RepoFile.deleteAll();
         RepoCommit.deleteAll();
+        // PCAProgram.deleteAll();
         Logger.info("Wiped all repository data.");
     }
 

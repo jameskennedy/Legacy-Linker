@@ -1,5 +1,6 @@
 package controllers;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,7 +21,7 @@ import play.mvc.Controller;
 public class Application extends Controller {
 
     @Transactional(readOnly = true)
-    public static void index(@Match("\\s*\\w{0,8}\\s*") String programName) {
+    public static void index(@Match("\\s*\\w{0,8}\\s*") String programName, final int page) {
         if (validation.hasErrors()) {
             flash.error("Oops, program name is invalid.");
             render();
@@ -33,10 +34,18 @@ public class Application extends Controller {
         }
 
         programName = programName.trim().toUpperCase();
+        List<PCAProgram> results = PCAProgram.find("Name like ? order by name", "%" + programName + "%")
+                        .fetch(page, 20);
 
-        List<PCAProgram> results = PCAProgram.find("Name like ? order by name", "%" + programName + "%").fetch(1, 200);
+        if (results.size() == 1) {
+            showProgram(results.get(0).name);
+        }
 
-        render(programName, results);
+        if (results.isEmpty() && page > 1) {
+            results = null;
+        }
+
+        render(programName, results, page);
     }
 
     public static void showProgram(@Required String programName) {
@@ -51,7 +60,9 @@ public class Application extends Controller {
         List<PCAProgramClassLink> linkList = PCAProgramClassLink.find(
                         "methodName is null and program = ? order by linkLines desc", program).fetch();
 
-        render(repository, program, linkList);
+        List<Long> classSelection = defaultClassSelection(linkList);
+
+        render(repository, program, linkList, classSelection);
     }
 
     public static void relevantCommits(@Required String programName) {
@@ -65,18 +76,31 @@ public class Application extends Controller {
             commits = getCommits(program, linkList);
         }
 
-        render(commits);
+        render(commits, program);
     }
 
     private static Set<RepoCommit> getCommits(final PCAProgram program, final List<PCAProgramClassLink> linkList) {
         Set<RepoCommit> commits = new TreeSet<RepoCommit>();
 
+        for (RepoCommit programCommit : program.commitLinks) {
+            programCommit.toolTip = program.name + " linked via comment mesage.\n";
+        }
         commits.addAll(program.commitLinks);
 
         for (PCAProgramClassLink classLink : linkList) {
             commits.addAll(classLink.file.commits);
         }
         return commits;
+    }
+
+    private static List<Long> defaultClassSelection(final List<PCAProgramClassLink> linkList) {
+        List<Long> selection = new ArrayList<Long>();
+        for (PCAProgramClassLink link : linkList) {
+            if (link.lineCoverage() > 60f) {
+                selection.add(link.getId());
+            }
+        }
+        return selection;
     }
 
 }

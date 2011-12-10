@@ -20,22 +20,18 @@ import edu.nyu.cs.javagit.api.commands.GitLogResponse.Commit;
 @Entity
 public class RepoCommit extends Model implements Comparable<RepoCommit> {
 
-    @Transient
-    private static final String SVN_REV_TOKEN = "git-svn-id:";
-    @Unique
-    @Index(name = "shaIndex")
-    @Required
-    public String sha;
+    @Transient private static final String SVN_REV_TOKEN = "git-svn-id:";
+    @Unique @Index(name = "shaIndex") @Required public String sha;
     public Integer svnRevision;
     public String svnURL;
     public String author;
-    @Required
-    @Lob
-    public String message;
-    @Required
-    public Date date;
-    @ManyToOne
-    public PCAProgram program;
+    @Required @Lob public String message;
+    @Required public Date date;
+    @ManyToOne public PCAProgram program;
+    Integer linesAdded;
+    Integer linesRemoved;
+
+    @Transient public String toolTip;
 
     public static SimpleDateFormat DF = new SimpleDateFormat("E MMM d HH:mm:ss yyyy Z");
 
@@ -47,6 +43,12 @@ public class RepoCommit extends Model implements Comparable<RepoCommit> {
         parseSVNRevision();
         // Expecting format: Sat Dec 3 23:58:57 2011 +0000
         date = DF.parse(gitCommit.getDateString());
+        linesAdded = gitCommit.getLinesInserted();
+        linesRemoved = gitCommit.getLinesDeleted();
+    }
+
+    public String getToolTip() {
+        return toolTip;
     }
 
     @Override

@@ -24,6 +24,9 @@
 			This list of Java code is based on the @legacy annotations that reference ${program.name}.
 			Because developers use the @legacy inconsistently the line coverage calculation is not fully accurate.
 		</p>
+		#{if linkList.isEmpty()}
+			No classes linked to this program.
+		#{/if}
 		<table class="code">
 			#{list items:linkList, as:'link' }
 				%{ 
@@ -32,7 +35,7 @@
 				}%
 			
 	        	<tr>
-	        		<td><input type="checkbox" name="file_${link.file.id}"/></td>
+	        		<td><input type="checkbox" name="file_${link.file.id}" ${classSelection.contains(link.id) ? 'checked':''}/></td>
 	        		<td title="Line coverage ${link.lineCoverage()}%">${link.linkLines}/${link.lineTotal}</td>
 	        		<td #{if link.indirect}class="indirect"#{/if} title="${classTip}">${link.className}</td>
 	        	</tr>
@@ -53,7 +56,6 @@
 			This is a chronological list of commits that MAY be relevant to the selected classes on the left.
 			Use the checkboxes to select which classes to include.<br/>
 		</p>
-		<hr/>
 		<div id="commitList">
 			Loading commit history...
 		</div>

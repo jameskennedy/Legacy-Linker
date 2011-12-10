@@ -3,13 +3,22 @@
 
 PCA Program:
 
-#{form @Application.index()}
+#{form @Application.index(), id:'searchForm' }
     <input type="text" name="programName" value="${programName ?: 'MRCPSO06'}" /> 
-    <input type="submit" value="Search" />
+    <input id="searchSubmit" type="submit" value="Search" />
+    <input id="pageInput" type="hidden" name="page" value="${page}"/>
 #{/form}
 
 #{if results != null && results.isEmpty()}
 	No matching programs found.
+#{/if}
+
+#{if results || page > 1}
+<div class="navBar">
+	Page: <span id="pageDisplay">${page}</span>
+	<a  id="previousLink" href="#">Previous</a>
+	<a id="nextLink" href="#" >Next</a>
+ </div>
 #{/if}
 
 #{if results}
@@ -20,6 +29,40 @@ PCA Program:
     	#{/list}
     </table>
 #{/if}
+
+<script type="text/javascript">
+var page = ${page};
+var maxPage = ${Integer.MAX_VALUE}
+#{if results == null}
+	maxPage = page - 1;
+#{/if}
+
+$('#searchSubmit').click(function() {
+	$('#pageInput').val(1);
+	return true;
+})
+
+if (page <= maxPage) {
+	$('#nextLink').click(function() {
+		var nextPage = page + 1;
+		$('#pageInput').val(nextPage);
+		$('#searchForm').submit();
+	})
+} else {
+	$('#nextLink').css('display','none');
+}
+
+if (page > 1) {
+	$('#previousLink').click(function() {
+		var nextPage = page - 1;
+		$('#pageInput').val(nextPage);
+		$('#searchForm').submit();
+	})
+} else {
+	$('#previousLink').css('display','none');
+}
+
+</script>
 
 <!-- 
 Feature List

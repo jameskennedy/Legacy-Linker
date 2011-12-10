@@ -17,6 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -256,15 +258,62 @@ public class PCALinkageService {
             System.out.println(programName);
             PCAProgram program = PCAProgram.find("byName", programName).first();
             if (null == program) {
-                // TODO: Avoid creating programs here since there are many false
-                // positives. Pre-load programs elsewhere
-                program = new PCAProgram(programName, null, null);
-                program.save();
+                continue;
             }
 
             commit.program = program;
             commit.save();
             Logger.debug("Linked program %s to commit %s", programName, commit.sha);
+        }
+    }
+
+    public static void loadProgramsFromDisk(final File rootDir) {
+        if (PCAProgram.all().first() != null) {
+            return;
+        }
+
+        if (rootDir == null || !rootDir.exists() || !rootDir.isDirectory()) {
+            throw new IllegalArgumentException(rootDir + " is not anexisting root direcotry.");
+        }
+
+        Logger.debug("Loading Cobol programs to db...");
+
+        Stack<File> fileStack = new Stack<File>();
+        fileStack.push(rootDir);
+
+        Set<String> programNames = new HashSet<String>();
+
+        int filesScanned = 0;
+        while (!fileStack.isEmpty()) {
+            File file = fileStack.pop();
+            if (file.isDirectory()) {
+                fileStack.addAll(Arrays.asList(file.listFiles()));
+                filesScanned = 0;
+                continue;
+            }
+
+            if (!file.isFile() || file.isHidden() || !file.exists()) {
+                continue;
+            }
+
+            String fileName = file.getName();
+            if (fileName.endsWith(".cpy") || fileName.endsWith(".ccp") || fileName.endsWith(".cbl")
+                            || fileName.endsWith(".proc")) {
+                programNames.add(fileName.substring(0, fileName.lastIndexOf(".")));
+            }
+
+            if (filesScanned++ % 10000 == 0) {
+                Logger.debug("Cobol programs left: %d", fileStack.size());
+            }
+        }
+
+        filesScanned = 0;
+        for (String program : programNames) {
+            PCAProgram programEntity = new PCAProgram(program, null, null);
+            programEntity.save();
+            if (filesScanned++ % 500 == 0) {
+                Logger.debug("Cobol programs to save: %d", programNames.size() - filesScanned);
+            }
         }
     }
 }
