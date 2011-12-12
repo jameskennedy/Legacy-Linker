@@ -10,8 +10,7 @@ public class GITRepository extends Model {
 
     public String name;
 
-    @Unique
-    public String location;
+    @Unique public String location;
     public String lastCommitParsed;
 
     public Integer svnRevision;

@@ -28,8 +28,8 @@ public class RepoCommit extends Model implements Comparable<RepoCommit> {
     @Required @Lob public String message;
     @Required public Date date;
     @ManyToOne public PCAProgram program;
-    Integer linesAdded;
-    Integer linesRemoved;
+    public Integer linesAdded;
+    public Integer linesRemoved;
 
     @Transient public String toolTip;
 

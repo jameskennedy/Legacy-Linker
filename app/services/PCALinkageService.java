@@ -41,7 +41,7 @@ import play.db.jpa.NoTransaction;
 public class PCALinkageService {
 
     private static Pattern LEGACY_PROGRAM = Pattern.compile("@legacy[\\s\\t]*([a-zA-Z][a-zA-Z0-9]{2,7})");
-    private static Pattern COMMIT_PROGRAM = Pattern.compile("[A-Z][A-Z0-9]{2,7}");
+    private static Pattern COMMIT_PROGRAM = Pattern.compile("(^|\\W)([A-Z][A-Z0-9]{2,7})(\\W|$)");
 
     @NoTransaction
     public static void updateFileLinkage(final GITRepository repo, final Set<RepoFile> files) {
@@ -254,7 +254,7 @@ public class PCALinkageService {
         Matcher matcher = COMMIT_PROGRAM.matcher(commit.message);
 
         while (matcher.find()) {
-            String programName = matcher.group();
+            String programName = matcher.group(2);
             System.out.println(programName);
             PCAProgram program = PCAProgram.find("byName", programName).first();
             if (null == program) {

@@ -1,10 +1,14 @@
 package models;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
@@ -16,25 +20,19 @@ import play.db.jpa.Model;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 public class PCAProgramClassLink extends Model implements Comparable<PCAProgramClassLink> {
 
-    @ManyToOne(optional = false)
-    @Required
-    public PCAProgram program;
+    @ManyToOne(optional = false) @Required public PCAProgram program;
 
-    @ManyToOne(optional = false)
-    @Required
-    public RepoFile file;
+    @ManyToOne(optional = false) @Required public RepoFile file;
 
-    @OneToMany(mappedBy = "classLink")
-    public List<PCAProgramMethodLink> methodLinks;
+    @OneToMany(mappedBy = "classLink") public List<PCAProgramMethodLink> methodLinks;
 
-    @Required
-    @Unique("className, methodName")
-    public String className;
+    @Required @Unique("className, methodName") public String className;
     public Integer lineTotal = 0;
     public Integer linkLines = 0;
 
-    @Required
-    public Boolean indirect = Boolean.FALSE;
+    @Lob public Map<String, Integer> authorLinesMap = new HashMap<String, Integer>();
+
+    @Required public Boolean indirect = Boolean.FALSE;
 
     @Override
     public String toString() {
@@ -67,6 +65,20 @@ public class PCAProgramClassLink extends Model implements Comparable<PCAProgramC
             return 0f;
         }
 
-        return Math.round(10000f * linkLines / lineTotal) / 100;
+        return linkLines / (float) lineTotal * 100;
+    }
+
+    public String getAuthorLinesMapAsJSON() {
+        StringBuffer buf = new StringBuffer("{");
+        boolean first = true;
+        for (Entry<String, Integer> entry : authorLinesMap.entrySet()) {
+            if (!first) {
+                buf.append(",");
+            }
+            buf.append("'" + entry.getKey() + "': " + entry.getValue());
+            first = false;
+        }
+        buf.append("}");
+        return buf.toString();
     }
 }

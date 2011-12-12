@@ -11,8 +11,13 @@ table.content td {
 	vertical-align: top;
 }
 
+h4 {
+	margin-top: 4px;
+	text-align: center;
+}
+
 #linkPanel {
-	width: 40%;
+	width: 460px;
 }
 
 #historyPanel {
@@ -24,6 +29,12 @@ table.content td {
 	font-size: 10pt;
 }
 
+.classLink td {
+	padding: 4px 2px 0px 2px;
+}
+.classLink:hover {
+	border: solid 1px black;
+}
 .commitPanel {
 	border: solid 1px black;
 	border-bottom: none;
@@ -66,3 +77,16 @@ table.content td {
 .indirect {
 	color: #777;
 }
+
+#programAuthorChart {
+	border: solid 1px black;
+	margin-bottom: 0.5em;
+	text-align: center;
+}
+#floatingAuthorChart {
+	position: absolute;
+	left: 460px;
+	border: solid 1px black;
+	background: #fff
+}
+

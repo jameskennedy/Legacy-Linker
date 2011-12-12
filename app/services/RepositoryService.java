@@ -1,5 +1,6 @@
 package services;
 
+import java.util.HashMap;
 import java.util.List;
 
 import models.PCAProgramClassLink;
@@ -20,6 +21,28 @@ public class RepositoryService {
         RepoCommit.deleteAll();
         // PCAProgram.deleteAll();
         Logger.info("Wiped all repository data.");
+    }
+
+    // TODO: Use exactly the lines covered under @legacy for given program
+    public static void calculateAuthorship(final PCAProgramClassLink classLink) {
+        if (classLink.authorLinesMap != null) {
+            return;
+        }
+
+        classLink.authorLinesMap = new HashMap<String, Integer>();
+
+        RepoFile file = classLink.file;
+
+        for (RepoCommit commit : file.commits) {
+            String author = commit.author;
+            Integer commitLines = commit.linesAdded + commit.linesRemoved;
+            Integer authorLines = classLink.authorLinesMap.get(author);
+            if (null == authorLines) {
+                authorLines = 0;
+            }
+            authorLines = authorLines + commitLines;
+            classLink.authorLinesMap.put(author, authorLines);
+        }
     }
 
 }

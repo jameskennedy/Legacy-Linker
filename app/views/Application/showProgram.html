@@ -3,8 +3,55 @@
 #{set 'moreStyles'}
 <link rel="stylesheet" media="screen" href="@{'/public/stylesheets/showProgram.css'}">  
 #{/set}
-#{set 'moreScripts'}
+#{set 'moreScripts'} 
+<script src="@{'/public/javascripts/jgcharts.pack.js'}" type="text/javascript"></script>
 <script type="text/javascript" src="@{'/public/javascripts/showProgram.js'}"></script>
+<script type="text/javascript">
+	
+	function renderAuthorChart(authorMap, target, title) {
+		$(target).html('');
+		
+		if (!authorMap) {
+			return;
+		}
+		
+		if (Object.keys(authorMap).length == 0) {
+			return;
+		}
+		
+		var axis_labels = [];
+		var data = [];
+		var i = 0;
+		for (var author in authorMap) {
+			var lines = authorMap[author];
+			axis_labels[i] = author + ' ' + lines;
+			data[i] = [lines,0,0];
+			i++;
+		}
+		
+		var pieParams = { 
+			data : data,//mandatory  
+			type : 'p3',//default bvg 
+			size : '400x100' ,
+			axis_labels : axis_labels
+		}
+		
+		var api = new jGCharts.Api(); 
+		jQuery('<img>') 
+		.attr('src', api.make(pieParams)) 
+		.appendTo(target);
+		
+		$(target).prepend("<h4>" + title + "</h4>");
+	}	
+	
+	function renderFloatingAuthorChart(authorMap, classLinkIndex) {
+		var classRow = $('#classLink_' + classLinkIndex);
+		var offset = classRow.offset();
+		var title = classRow.children("td.className").text();
+		$('#floatingAuthorChart').css("top", offset.top);
+		renderAuthorChart(authorMap, '#floatingAuthorChart', title);
+	}
+</script>
 #{/set}
 
 <div id="headerPanel">
@@ -24,20 +71,27 @@
 			This list of Java code is based on the @legacy annotations that reference ${program.name}.
 			Because developers use the @legacy inconsistently the line coverage calculation is not fully accurate.
 		</p>
-		#{if linkList.isEmpty()}
+		#{if !linkList || linkList.isEmpty()}
 			No classes linked to this program.
 		#{/if}
-		<table class="code">
+		
+ 		<div id="programAuthorChart" >
+
+		</div>
+		
+		<table class="code" width="100%">
 			#{list items:linkList, as:'link' }
 				%{ 
 					classTip = link.indirect ? "Not linked via @legacy annotation.\n" : "";
 					classTip = classTip + link.getFullyQualifiedClassName();
 				}%
 			
-	        	<tr>
-	        		<td><input type="checkbox" name="file_${link.file.id}" ${classSelection.contains(link.id) ? 'checked':''}/></td>
-	        		<td title="Line coverage ${link.lineCoverage()}%">${link.linkLines}/${link.lineTotal}</td>
-	        		<td #{if link.indirect}class="indirect"#{/if} title="${classTip}">${link.className}</td>
+	        	<tr id="classLink_${link_index}" class="classLink" 
+	        			onmouseover="renderFloatingAuthorChart(${link.getAuthorLinesMapAsJSON()}, ${link_index})"
+	        			onmouseout="$('#floatingAuthorChart').html('')">
+	        		<td><input id="${link.id}" class="selectInput"  type="checkbox" name="select${link.id}" ${classSelection.contains(link.id) ? 'checked':''}/></td>
+	        		<td title="Line coverage ${link.lineCoverage().format('0.00')}%">${link.linkLines}/${link.lineTotal}</td>
+	        		<td class="className ${link.indirect ? 'indirect' : ''}" title="${classTip}">${link.className}</td>
 	        	</tr>
 	        	#{list items:link.methodLinks, as:'method' }
 	        	<tr>
@@ -60,15 +114,40 @@
 			Loading commit history...
 		</div>
 		<script type="text/javascript">
-			var getCommits = #{jsAction @relevantCommits(':programName') /};
+			var getCommits = #{jsAction @relevantCommits(':programName', ':classSelection') /};
+			var getProgramAuthorship = #{jsAction @getProgramAuthorship(':programName', ':classSelection') /};
 			
 			reloadCommits = function() {
-			   $('#commitList').load(getCommits({programName: '${program.name}'}));
+				selection = [];
+				index = 0;
+				
+				$(".selectInput").each( 
+					function() { 
+					    if (this.checked) { 
+				              selection[index++] = '' + this.id;
+				         }
+					
+					});
+				
+			   	$('#commitList').load(getCommits({programName: '${program.name}', classSelection: selection}));
+			   	
+			   	jQuery.getJSON(getProgramAuthorship({programName: '${program.name}', classSelection: selection}), function(data, textStatus, jqXHR) {
+			   		renderAuthorChart(data, '#programAuthorChart', 'Authors of selected classes');
+			   	})
+			   	
 			}
 		
 			document.body.onload = function() {
 				reloadCommits();
 			}
+			
+			$(".selectInput").click( 
+				function() { 
+				    reloadCommits();
+				});
+			
+			
+			
 		</script>
 	</td>
 	
@@ -76,4 +155,8 @@
 	
 	
 	</tr>
+	
+	<div id="floatingAuthorChart" >
+
+	</div>
 </table>

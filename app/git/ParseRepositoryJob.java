@@ -53,6 +53,7 @@ public class ParseRepositoryJob extends Job {
 
         // TODO: How come this doesn't work?
         if (repo.lastCommitParsed != null) {
+            Logger.info("Only fetching changes after " + repo.lastCommitParsed);
             gitLogOptions.setOptLimitCommitSince(true, repo.lastCommitParsed);
         }
 
