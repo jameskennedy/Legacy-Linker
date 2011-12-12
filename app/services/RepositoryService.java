@@ -24,6 +24,9 @@ public class RepositoryService {
     }
 
     // TODO: Use exactly the lines covered under @legacy for given program
+    // git blame -p -w -C -M -l -L1,100
+    // triadServicesEJB/ejbModule/com/sasktelinternational/triad/services/common/serviceorder/SignoffCabdisUtilService.java
+
     public static void calculateAuthorship(final PCAProgramClassLink classLink) {
         if (classLink.authorLinesMap != null) {
             return;

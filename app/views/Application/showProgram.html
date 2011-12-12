@@ -55,8 +55,19 @@
 #{/set}
 
 <div id="headerPanel">
+
+	<div id="searchPanel">
+		#{form @Application.index(), id:'searchForm' }
+			PCA Program Search:
+		    <input type="text" name="programName" value="${program.name}" /> 
+		    <input id="searchSubmit" type="submit" value="Search" />
+		#{/form}
+	</div>
 	<table>
-		<tr><td>Current as of SVN Revision:</td><td>${repository.svnRevision}</td></tr>
+		<tr>
+			<td>Current as of SVN Revision:</td>
+			<td>${repository.svnRevision}</td>
+		</tr>
 	</table>
 
 </div>

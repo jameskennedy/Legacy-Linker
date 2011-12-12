@@ -16,6 +16,11 @@ h4 {
 	text-align: center;
 }
 
+#searchPanel {
+	float:right;
+	width: 200px;
+}
+
 #linkPanel {
 	width: 460px;
 }
