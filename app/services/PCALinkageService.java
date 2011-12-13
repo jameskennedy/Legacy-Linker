@@ -255,7 +255,6 @@ public class PCALinkageService {
 
         while (matcher.find()) {
             String programName = matcher.group(2);
-            System.out.println(programName);
             PCAProgram program = PCAProgram.find("byName", programName).first();
             if (null == program) {
                 continue;

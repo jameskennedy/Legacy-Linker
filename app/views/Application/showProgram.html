@@ -77,10 +77,11 @@
 	<tr>
 	
 	<td id ="linkPanel">
-		<h2>Legacy Code Coverage</h2>
+		<h2>Legacy Code Linkage</h2>
 		<p class="explanation">
 			This list of Java code is based on the @legacy annotations that reference ${program.name}.
-			Because developers use the @legacy inconsistently the line coverage calculation is not fully accurate.
+			Only the checked/selected classes will be included in the author chart.  By default only the classes with
+			a program linkage greater than 60% are selected.
 		</p>
 		#{if !linkList || linkList.isEmpty()}
 			No classes linked to this program.
@@ -101,7 +102,7 @@
 	        			onmouseover="renderFloatingAuthorChart(${link.getAuthorLinesMapAsJSON()}, ${link_index})"
 	        			onmouseout="$('#floatingAuthorChart').html('')">
 	        		<td><input id="${link.id}" class="selectInput"  type="checkbox" name="select${link.id}" ${classSelection.contains(link.id) ? 'checked':''}/></td>
-	        		<td title="Line coverage ${link.lineCoverage().format('0.00')}%">${link.linkLines}/${link.lineTotal}</td>
+	        		<td title="Line linkage ${link.lineCoverage().format('0.00')}%">${link.linkLines}/${link.lineTotal}</td>
 	        		<td class="className ${link.indirect ? 'indirect' : ''}" title="${classTip}">${link.className}</td>
 	        	</tr>
 	        	#{list items:link.methodLinks, as:'method' }
@@ -118,7 +119,7 @@
 	<td id="historyPanel">
 		<h2>Commit History</h2>
 		<p class="explanation">
-			This is a chronological list of commits that MAY be relevant to the selected classes on the left.
+			This is a chronological list of commits that are relevant to the selected classes on the left.
 			Use the checkboxes to select which classes to include.<br/>
 		</p>
 		<div id="commitList">

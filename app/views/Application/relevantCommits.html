@@ -7,13 +7,24 @@
   	<div class="commitHeader">
   		 <table width="100%">
   		 	<tr><td width="150px" title="${commit.date.format('MMM d, yyyy h:mm:ss a')}">${commit.date.since(true)}</td>
-  		 		<td width="200px">Rev ${commit.svnRevision} ${commit.program}</td>
+  		 		<td width="200px">Rev ${commit.svnRevision}</td>
   		 		<td width="40px">+ ${commit.linesAdded}</td>
   		 		<td width="40px">- ${commit.linesRemoved}</td>
   		 		<td class="commitAuthor">${commit.author}</td>
   		 	</tr>
   		 </table>
   	</div>
-  	<div class="commitBody">${commit.message}</div>
+  	<div class="commitBody">
+  		#{if commit.program}
+  			%{ 
+  				markedUp = commit.message.replace(commit.program.name, 
+  												'<a href="/application/showprogram?programName=' + commit.program.name + '">' + commit.program.name + '</a>')
+  				out.print(markedUp);
+  			%}
+  		#{/if}
+  		#{else}
+  			${commit.message}
+  		#{/else}
+  	</div>
   </div>
 #{/list}

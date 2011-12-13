@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
-import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
@@ -30,7 +30,7 @@ public class PCAProgramClassLink extends Model implements Comparable<PCAProgramC
     public Integer lineTotal = 0;
     public Integer linkLines = 0;
 
-    @Lob public Map<String, Integer> authorLinesMap = new HashMap<String, Integer>();
+    @Embedded public Map<String, Integer> authorLinesMap = new HashMap<String, Integer>();
 
     @Required public Boolean indirect = Boolean.FALSE;
 
@@ -69,6 +69,10 @@ public class PCAProgramClassLink extends Model implements Comparable<PCAProgramC
     }
 
     public String getAuthorLinesMapAsJSON() {
+        if (null == authorLinesMap) {
+            return "{}";
+        }
+
         StringBuffer buf = new StringBuffer("{");
         boolean first = true;
         for (Entry<String, Integer> entry : authorLinesMap.entrySet()) {

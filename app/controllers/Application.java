@@ -15,6 +15,7 @@ import models.RepoCommit;
 
 import org.apache.commons.lang.StringUtils;
 
+import play.Logger;
 import play.data.binding.As;
 import play.data.validation.Match;
 import play.data.validation.Required;
@@ -58,11 +59,14 @@ public class Application extends Controller {
      * @param programName
      */
     public static void showProgram(@Required String programName) {
+        Logger.info("Showing page %s..", programName);
+
         GITRepository repository = GITRepository.getMainRepository();
         programName = programName.trim().toUpperCase();
 
         PCAProgram program = PCAProgram.find("byName", programName).first();
         if (null == program) {
+            Logger.info("Failed to show page, %s not found.", programName);
             error(404, "Program " + programName + " cannot be found.");
         }
 
@@ -79,6 +83,8 @@ public class Application extends Controller {
     }
 
     public static void relevantCommits(@Required final String programName, @As(",") final List<Long> classSelection) {
+        Logger.info("Updating commits for program %s.", programName);
+
         List<PCAProgramClassLink> selectedClassLinks = new ArrayList<PCAProgramClassLink>();
         PCAProgram program = getSelectedClassLinksForProgram(programName, classSelection, selectedClassLinks);
 
@@ -128,7 +134,7 @@ public class Application extends Controller {
 
                 // TODO Ugly approximation need to tally actualy lines that
                 // contribute only
-                lines += Math.round(coverage / 100 * entry.getValue());
+                lines += Math.round(coverage / 100f * entry.getValue());
                 result.put(author, lines);
             }
         }

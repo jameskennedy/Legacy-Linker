@@ -38,7 +38,7 @@ public class RepositoryService {
 
         for (RepoCommit commit : file.commits) {
             String author = commit.author;
-            Integer commitLines = commit.linesAdded + commit.linesRemoved;
+            Integer commitLines = commit.linesAdded;
             Integer authorLines = classLink.authorLinesMap.get(author);
             if (null == authorLines) {
                 authorLines = 0;

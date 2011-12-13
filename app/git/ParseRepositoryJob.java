@@ -52,13 +52,13 @@ public class ParseRepositoryJob extends Job {
         gitLogOptions.setOptFileDetails(true);
 
         // TODO: How come this doesn't work?
-        if (repo.lastCommitParsed != null) {
-            Logger.info("Only fetching changes after " + repo.lastCommitParsed);
-            gitLogOptions.setOptLimitCommitSince(true, repo.lastCommitParsed);
-        }
+        // if (repo.lastCommitParsed != null) {
+        // Logger.info("Only fetching changes after " + repo.lastCommitParsed);
+        // gitLogOptions.setOptLimitCommitSince(true, repo.lastCommitParsed);
+        // }
 
         // TODO: DEBUG
-        gitLogOptions.setOptLimitCommitMax(true, 1000);
+        // gitLogOptions.setOptLimitCommitMax(true, 30);
 
         List<Commit> commitList = null;
         try {
@@ -97,6 +97,12 @@ public class ParseRepositoryJob extends Job {
         Logger.info("Processed %d new commits.\nUpdating PCA program file linkage...", newCommits);
 
         repo.save();
+
+        // TODO: Remove hack
+        if (filesCommitted.isEmpty()) {
+            List<RepoFile> repoFiles = RepoFile.findAll();
+            filesCommitted.addAll(repoFiles);
+        }
 
         PCALinkageService.updateFileLinkage(repo, filesCommitted);
 
