@@ -86,6 +86,9 @@ h4 {
 .commitFile td {
 	padding-right: 10px;
 }
+.commitFile.deleted {
+	color: #777;
+}
 
 .commitBody {
 	background: #FFFF99;

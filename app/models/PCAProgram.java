@@ -8,15 +8,18 @@ import javax.persistence.OneToMany;
 import play.db.jpa.Model;
 
 @Entity
+// TODO don't extend Model, use GenericModel and make name the key column
 public class PCAProgram extends Model {
 
     public String name;
     public String description;
     public String author;
 
-    @OneToMany(mappedBy = "program") public List<PCAProgramClassLink> javaLinks;
+    @OneToMany(mappedBy = "program")
+    public List<PCAProgramClassLink> javaLinks;
 
-    @OneToMany(mappedBy = "program") public List<RepoCommit> commitLinks;
+    @OneToMany(mappedBy = "program")
+    public List<RepoCommit> commitLinks;
 
     public PCAProgram(final String name, final String description, final String author) {
         this.name = name;

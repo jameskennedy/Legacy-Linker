@@ -24,10 +24,17 @@ public class RepoFile extends Model implements Comparable<RepoFile> {
     public String path;
 
     public Integer lines;
+    public Boolean deletedInHead;
 
     // @ManyToMany(fetch = FetchType.LAZY) public List<RepoCommit> commits;
     @OneToMany(mappedBy = "file", cascade = { CascadeType.REMOVE }, orphanRemoval = true)
     public List<RepoFileCommit> commits;
+
+    /**
+     * Flag to indicate that PCALinkageJob needs to update this RepoFile's PCA
+     * links.
+     */
+    public Boolean linkUpdateNeeded;
 
     // public List<RepoCommit> commits;
 

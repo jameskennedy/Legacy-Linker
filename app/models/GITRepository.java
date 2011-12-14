@@ -1,5 +1,7 @@
 package models;
 
+import java.util.Date;
+
 import javax.persistence.Entity;
 
 import play.data.validation.Unique;
@@ -10,8 +12,11 @@ public class GITRepository extends Model {
 
     public String name;
 
-    @Unique public String location;
+    @Unique
+    public String location;
     public String lastCommitParsed;
+    public Date lastCommitDate;
+    public Date earliestCommitDate;
 
     public Integer svnRevision;
 

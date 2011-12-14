@@ -6,6 +6,7 @@ import models.GITRepository;
 import play.libs.F.Action;
 import play.libs.F.Promise;
 import play.mvc.Controller;
+import services.PCALinkageService;
 import services.RepositoryService;
 
 /**
@@ -35,7 +36,7 @@ public class Repository extends Controller {
         redirect("Repository.index");
     }
 
-    public synchronized static void update() {
+    public static void syncWithRepository() {
         String status = determineStatus();
 
         if (status.equals("Idle")) {
@@ -55,11 +56,18 @@ public class Repository extends Controller {
     }
 
     /**
-     * Completely erase all repository data.
+     * Completely erase all repository data and data depending on it
      */
-    public synchronized static void wipe() {
+    public static void wipeRepoData() {
         RepositoryService.wipeRepositoryData();
+        index();
+    }
 
+    /**
+     * Completely erase all PCA linkage data and data depending on it
+     */
+    public static void wipePCALinks() {
+        PCALinkageService.wipeAllLinks();
         index();
     }
 

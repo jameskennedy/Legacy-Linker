@@ -25,11 +25,16 @@
 #{if currentRepository}
 <h3>Actions</h3>
 Status: ${status}
-<form action="@{Repository.update()}" method="POST">
-    <input type="submit" value="Update" ${disableAction ? 'disabled=true' : ''}"/>
+
+<form action="@{Repository.syncWithRepository()}" method="POST">
+    <input type="submit" value="Sync with git" ${disableAction ? 'disabled=true' : ''}"/>
 </form>
 
-<form action="@{Repository.wipe()}" method="POST">
-    <input type="submit" value="Wipe" ${disableAction ? 'disabled=true' : ''}"/>
+<form action="@{Repository.wipeRepoData()}" method="POST">
+    <input type="submit" value="Wipe RepoData" ${disableAction ? 'disabled=true' : ''}"/>
+</form>
+
+<form action="@{Repository.wipePCALinks()}" method="POST">
+    <input type="submit" value="Wipe PCA Links" ${disableAction ? 'disabled=true' : ''}"/>
 </form>
 #{/if}

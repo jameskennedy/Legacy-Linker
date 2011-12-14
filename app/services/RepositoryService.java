@@ -2,6 +2,7 @@ package services;
 
 import java.util.HashMap;
 
+import models.GITRepository;
 import models.PCAProgramClassLink;
 import models.RepoCommit;
 import models.RepoFile;
@@ -11,11 +12,17 @@ import play.Logger;
 public class RepositoryService {
 
     public static void wipeRepositoryData() {
-        PCAProgramClassLink.deleteAll();
+        // Wipe dependent data
+        PCALinkageService.wipeAllLinks();
+
         RepoFileCommit.deleteAll();
         RepoFile.deleteAll();
         RepoCommit.deleteAll();
-        // PCAProgram.deleteAll();
+        GITRepository mainRepository = GITRepository.getMainRepository();
+        mainRepository.earliestCommitDate = null;
+        mainRepository.lastCommitDate = null;
+        mainRepository.lastCommitParsed = null;
+        mainRepository.save();
         Logger.info("Wiped all repository data.");
     }
 

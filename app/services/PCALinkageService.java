@@ -29,25 +29,37 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import models.GITRepository;
+import javax.persistence.FlushModeType;
+
 import models.PCAProgram;
 import models.PCAProgramClassLink;
 import models.PCAProgramMethodLink;
 import models.RepoCommit;
 import models.RepoFile;
 import play.Logger;
-import play.db.jpa.NoTransaction;
 
 public class PCALinkageService {
 
     private static Pattern LEGACY_PROGRAM = Pattern.compile("@legacy[\\s\\t]*([a-zA-Z][a-zA-Z0-9]{2,7})");
     private static Pattern COMMIT_PROGRAM = Pattern.compile("(^|\\W)([A-Z][A-Z0-9]{2,7})(\\W|$)");
 
-    @NoTransaction
-    public static void updateFileLinkage(final GITRepository repo, final Set<RepoFile> files) {
-        int filesToProcess = files.size();
+    /**
+     * Identify all the RepoFiles that are not fresh with respect to recent
+     * commits and update all their PCA class/method links.
+     * 
+     * @return number of files processed
+     */
+    public static int updateFileLinkage() {
+        List<RepoFile> filesToLink = RepoFile.find("byLinkUpdateNeeded", Boolean.TRUE).fetch();
+
+        int filesToProcess = filesToLink.size();
         int filesProcessed = 0;
-        for (RepoFile repoFile : files) {
+        long start = System.currentTimeMillis();
+
+        // Speed things up?
+        PCAProgramClassLink.em().setFlushMode(FlushModeType.COMMIT);
+
+        for (RepoFile repoFile : filesToLink) {
             filesProcessed++;
 
             // Drop all existing links
@@ -59,14 +71,23 @@ public class PCALinkageService {
             if (!file.exists()) {
                 Logger.debug("[%d/%d] Unlinked deleted repository file %s", filesProcessed, filesToProcess,
                                 file.getAbsoluteFile());
+
+                repoFile.linkUpdateNeeded = Boolean.FALSE;
+                repoFile.deletedInHead = Boolean.TRUE;
+                repoFile.save();
                 continue;
             }
+
+            repoFile.deletedInHead = Boolean.FALSE;
 
             CompilationUnit cu = loadJavaFile(repoFile);
 
             List<TypeDeclaration> types = cu.getTypes();
             if (null == types) {
                 Logger.warn("[%d/%d] File %s has no type declaration.", filesProcessed, filesToProcess, path);
+
+                repoFile.linkUpdateNeeded = Boolean.FALSE;
+                repoFile.save();
                 continue;
             }
 
@@ -202,12 +223,30 @@ public class PCALinkageService {
                         clazzLink.save();
                     }
                 }
+
             }
 
             repoFile.lines = cu.getEndLine();
+            repoFile.linkUpdateNeeded = Boolean.FALSE;
             repoFile.save();
+
+            if (filesProcessed % 100 == 0) {
+                logTimingStatus(filesProcessed, start);
+            }
         }
 
+        logTimingStatus(filesProcessed, start);
+        return filesProcessed;
+    }
+
+    private static void logTimingStatus(final int filesProcessed, final long start) {
+        if (filesProcessed > 0) {
+            long stop = System.currentTimeMillis();
+            float time = (stop - start) / 1000f;
+            float average = time / filesProcessed;
+
+            Logger.info("Processed %d files in %f seconds. Average %f", filesProcessed, time, average);
+        }
     }
 
     private static CompilationUnit loadJavaFile(final RepoFile file) {
@@ -313,5 +352,10 @@ public class PCALinkageService {
                 Logger.debug("Cobol programs to save: %d", programNames.size() - filesScanned);
             }
         }
+    }
+
+    public static void wipeAllLinks() {
+        PCAProgramClassLink.deleteAll();
+        RepoFile.em().createQuery("UPDATE RepoFile SET linkUpdateNeeded = true").executeUpdate();
     }
 }
