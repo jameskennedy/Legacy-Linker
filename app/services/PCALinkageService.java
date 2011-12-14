@@ -40,8 +40,8 @@ import play.Logger;
 
 public class PCALinkageService {
 
-    private static Pattern LEGACY_PROGRAM = Pattern.compile("@legacy[\\s\\t]*([a-zA-Z][a-zA-Z0-9]{2,7})");
-    private static Pattern COMMIT_PROGRAM = Pattern.compile("(^|\\W)([A-Z][A-Z0-9]{2,7})(\\W|$)");
+    private static Pattern LEGACY_PROGRAM = Pattern.compile("@legacy[\\s]*([a-zA-Z][a-zA-Z0-9]{2,7})(\\s|$)");
+    private static Pattern COMMIT_PROGRAM = Pattern.compile("(^|\\s)([A-Z][A-Z0-9]{2,7})(\\s|$)");
 
     /**
      * Identify all the RepoFiles that are not fresh with respect to recent
