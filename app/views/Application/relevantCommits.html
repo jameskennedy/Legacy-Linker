@@ -8,17 +8,39 @@
   		 <table width="100%">
   		 	<tr><td width="150px" title="${commit.date.format('MMM d, yyyy h:mm:ss a')}">${commit.date.since(true)}</td>
   		 		<td width="200px">Rev ${commit.svnRevision}</td>
-  		 		<td width="40px">+ ${commit.linesAdded}</td>
-  		 		<td width="40px">- ${commit.linesRemoved}</td>
+  		 		<td width="40px" title="Lines added by commit">+ ${commit.linesAdded}</td>
+  		 		<td width="40px" title="Lines removed by commit">- ${commit.linesRemoved}</td>
   		 		<td class="commitAuthor">${commit.author}</td>
   		 	</tr>
+  		 </table>
+  	</div>
+  	<div class="commitFiles">
+  		<a id="${commit.id}" class="showNotRelevantLink" href="#" >Show All</a>
+  		<table>
+  		#{list items:commit.files, as: 'fileCommit' }
+  			%{ 
+  				includeFile = false;
+  				for (classLink in selectedClassLinks) {
+  					if (classLink.file == fileCommit.file) {
+  						includeFile = true;
+  						break;
+  					}
+  				}
+  			%}
+			<tr class="commitFile ${includeFile ? 'relevant' : 'notRelevant notRelevant' + commit.id}">
+				<td width="200px">${fileCommit.file.getName()}</td>
+		  	    <td width="40px" title="Lines added by ${fileCommit.file.getName()}">+ ${fileCommit.linesAdded}</td>
+		  		<td width="40px" title="Lines removed by ${fileCommit.file.getName()}">- ${fileCommit.linesRemoved}</td>
+		   </tr>
+  		#{/list}
   		 </table>
   	</div>
   	<div class="commitBody">
   		#{if commit.program}
   			%{ 
   				markedUp = commit.message.replace(commit.program.name, 
-  												'<a href="/application/showprogram?programName=' + commit.program.name + '">' + commit.program.name + '</a>')
+					'<a href="/application/showprogram?programName=' + commit.program.name + '">' 
+					+ commit.program.name + '</a>')
   				out.print(markedUp);
   			%}
   		#{/if}
@@ -28,3 +50,7 @@
   	</div>
   </div>
 #{/list}
+
+<script type="text/javascript">
+
+</script>

@@ -12,6 +12,7 @@ import models.GITRepository;
 import models.PCAProgram;
 import models.PCAProgramClassLink;
 import models.RepoCommit;
+import models.RepoFileCommit;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -23,10 +24,24 @@ import play.db.jpa.Transactional;
 import play.mvc.Controller;
 import services.RepositoryService;
 
+/**
+ * Main application controller.
+ * 
+ * @author james.kennedy
+ * 
+ */
 public class Application extends Controller {
 
+    private static final int RESULTS_PAGE_SIZE = 20;
+
+    /**
+     * Index page does PCA program search and results display.
+     * 
+     * @param programName
+     * @param page
+     */
     @Transactional(readOnly = true)
-    public static void index(@Match("\\s*\\w{0,8}\\s*") String programName, final int page) {
+    public static void index(@Match("\\s*\\w{0,8}\\s*") final String programName, final int page) {
         if (validation.hasErrors()) {
             flash.error("Oops, program name is invalid.");
             render();
@@ -38,19 +53,20 @@ public class Application extends Controller {
             return;
         }
 
-        programName = programName.trim().toUpperCase();
-        List<PCAProgram> results = PCAProgram.find("Name like ? order by name", "%" + programName + "%")
-                        .fetch(page, 20);
+        String programNameNormalized = programName.trim().toUpperCase();
+        List<PCAProgram> results = PCAProgram.find("Name like ? order by name", "%" + programNameNormalized + "%")
+                        .fetch(page, RESULTS_PAGE_SIZE);
 
         if (results.size() == 1) {
             showProgram(results.get(0).name);
+            // Play framework adds return call here
         }
 
         if (results.isEmpty() && page > 1) {
             results = null;
         }
 
-        render(programName, results, page);
+        render(programNameNormalized, results, page);
     }
 
     /**
@@ -58,16 +74,16 @@ public class Application extends Controller {
      * 
      * @param programName
      */
-    public static void showProgram(@Required String programName) {
-        Logger.info("Showing page %s..", programName);
+    public static void showProgram(@Required final String programName) {
+        Logger.info("Showing page for program %s", programName);
 
         GITRepository repository = GITRepository.getMainRepository();
-        programName = programName.trim().toUpperCase();
+        String programNameNormalized = programName.trim().toUpperCase();
 
-        PCAProgram program = PCAProgram.find("byName", programName).first();
+        PCAProgram program = PCAProgram.find("byName", programNameNormalized).first();
         if (null == program) {
-            Logger.info("Failed to show page, %s not found.", programName);
-            error(404, "Program " + programName + " cannot be found.");
+            Logger.info("Failed to show page, %s not found.", programNameNormalized);
+            error(404, "Program " + programNameNormalized + " cannot be found.");
         }
 
         List<PCAProgramClassLink> linkList = PCAProgramClassLink.find(
@@ -82,17 +98,32 @@ public class Application extends Controller {
         render(repository, program, linkList, classSelection);
     }
 
+    /**
+     * Handler of ajax requests to update display of repository commits. Will
+     * render a template for dynamic HTML insertion.
+     * 
+     * @param programName
+     * @param classSelection
+     */
     public static void relevantCommits(@Required final String programName, @As(",") final List<Long> classSelection) {
-        Logger.info("Updating commits for program %s.", programName);
+        Logger.info("Reloading commits for program %s.", programName);
 
         List<PCAProgramClassLink> selectedClassLinks = new ArrayList<PCAProgramClassLink>();
         PCAProgram program = getSelectedClassLinksForProgram(programName, classSelection, selectedClassLinks);
 
-        Set<RepoCommit> commits = getCommits(program, selectedClassLinks);
+        Set<RepoCommit> commits = getFileCommits(program, selectedClassLinks);
 
-        render(commits, program);
+        render(commits, program, selectedClassLinks);
     }
 
+    /**
+     * Handles ajax requests for the calculated authorship of the given program
+     * using the given PCAProgramClassLink id selection list.
+     * 
+     * @param programName
+     * @param classSelection
+     * @return Streams out the resulting table in JSON format.
+     */
     public static void getProgramAuthorship(@Required final String programName, @As(",") final List<Long> classSelection) {
         List<PCAProgramClassLink> selectedClassLinks = new ArrayList<PCAProgramClassLink>();
         getSelectedClassLinksForProgram(programName, classSelection, selectedClassLinks);
@@ -132,7 +163,7 @@ public class Application extends Controller {
                     lines = 0;
                 }
 
-                // TODO Ugly approximation need to tally actualy lines that
+                // TODO Rough approximation. need to tally actually lines that
                 // contribute only
                 lines += Math.round(coverage / 100f * entry.getValue());
                 result.put(author, lines);
@@ -141,7 +172,15 @@ public class Application extends Controller {
         return result;
     }
 
-    private static Set<RepoCommit> getCommits(final PCAProgram program, final List<PCAProgramClassLink> linkList) {
+    /**
+     * With the given program return the set of all it's associated commits
+     * restricted to those that affect the selected list of class links.
+     * 
+     * @param program
+     * @param linkList
+     * @return Set<RepoCommit>
+     */
+    private static Set<RepoCommit> getFileCommits(final PCAProgram program, final List<PCAProgramClassLink> linkList) {
         Set<RepoCommit> commits = new TreeSet<RepoCommit>();
 
         if (null == program) {
@@ -149,7 +188,9 @@ public class Application extends Controller {
         }
 
         for (PCAProgramClassLink classLink : linkList) {
-            commits.addAll(classLink.file.commits);
+            for (RepoFileCommit fileCommit : classLink.file.commits) {
+                commits.add(fileCommit.commit);
+            }
         }
 
         for (RepoCommit programCommit : program.commitLinks) {
@@ -160,6 +201,13 @@ public class Application extends Controller {
         return commits;
     }
 
+    /**
+     * Initialize a class link id selection by choosing only the ids out of the
+     * given linkList where the linkList has adequate program coverage.
+     * 
+     * @param linkList
+     * @return List of PCAProgramClassLink ids.
+     */
     private static List<Long> defaultClassSelection(final List<PCAProgramClassLink> linkList) {
         List<Long> selection = new ArrayList<Long>();
         for (PCAProgramClassLink link : linkList) {

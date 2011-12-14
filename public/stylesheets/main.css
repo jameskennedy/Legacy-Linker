@@ -1,0 +1,17 @@
+body, html {
+	margin: 0px;
+	padding: 0px;
+	
+}
+
+#titleHeader {
+	background: #FFFF99;
+	padding: 0.5em;
+	vertical-align: middle;
+	font-size: 20pt;
+	font-weight: bold;
+}
+
+.content {
+	margin: 0.5em;
+}

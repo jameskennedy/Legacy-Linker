@@ -1,22 +1,18 @@
 package services;
 
 import java.util.HashMap;
-import java.util.List;
 
 import models.PCAProgramClassLink;
 import models.RepoCommit;
 import models.RepoFile;
+import models.RepoFileCommit;
 import play.Logger;
 
 public class RepositoryService {
 
     public static void wipeRepositoryData() {
         PCAProgramClassLink.deleteAll();
-        List<RepoFile> allRepoFiles = RepoFile.findAll();
-        for (RepoFile repoFile : allRepoFiles) {
-            repoFile.commits.clear();
-            repoFile.save();
-        }
+        RepoFileCommit.deleteAll();
         RepoFile.deleteAll();
         RepoCommit.deleteAll();
         // PCAProgram.deleteAll();
@@ -36,9 +32,9 @@ public class RepositoryService {
 
         RepoFile file = classLink.file;
 
-        for (RepoCommit commit : file.commits) {
-            String author = commit.author;
-            Integer commitLines = commit.linesAdded;
+        for (RepoFileCommit fileCommit : file.commits) {
+            String author = fileCommit.commit.author;
+            Integer commitLines = fileCommit.linesAdded + fileCommit.linesRemoved;
             Integer authorLines = classLink.authorLinesMap.get(author);
             if (null == authorLines) {
                 authorLines = 0;

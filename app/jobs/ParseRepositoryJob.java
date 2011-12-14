@@ -1,9 +1,8 @@
-package git;
+package jobs;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -11,6 +10,7 @@ import java.util.TreeSet;
 import models.GITRepository;
 import models.RepoCommit;
 import models.RepoFile;
+import models.RepoFileCommit;
 import play.Logger;
 import play.db.jpa.NoTransaction;
 import play.jobs.Job;
@@ -35,8 +35,6 @@ public class ParseRepositoryJob extends Job {
             return;
         }
 
-        PCALinkageService.loadProgramsFromDisk(new File("/Users/james.kennedy/Documents/workspace/MartensSource"));
-
         Logger.info("Synchronizing history with %s...", repo.location);
 
         File repositoryDirectory = new File(repo.location);
@@ -58,7 +56,7 @@ public class ParseRepositoryJob extends Job {
         // }
 
         // TODO: DEBUG
-        // gitLogOptions.setOptLimitCommitMax(true, 30);
+        // gitLogOptions.setOptLimitCommitMax(true, 200);
 
         List<Commit> commitList = null;
         try {
@@ -122,6 +120,8 @@ public class ParseRepositoryJob extends Job {
                 return null;
             }
 
+            repoCommit.save();
+
             if (commit.getFiles() != null) {
                 for (CommitFile commitFile : commit.getFiles()) {
                     String path = commitFile.getName();
@@ -134,17 +134,20 @@ public class ParseRepositoryJob extends Job {
                     RepoFile repoFile = RepoFile.find("byRepositoryAndPath", repo, path).first();
                     if (null == repoFile) {
                         repoFile = new RepoFile(repo, path);
-                        repoFile.commits = new ArrayList<RepoCommit>();
                         repoFile.save();
                     }
 
                     // Associate the commit
-                    repoFile.commits.add(repoCommit);
+                    RepoFileCommit repoFileCommit = new RepoFileCommit();
+                    repoFileCommit.file = repoFile;
+                    repoFileCommit.commit = repoCommit;
+                    repoFileCommit.linesAdded = commitFile.getLinesAdded();
+                    repoFileCommit.linesRemoved = commitFile.getLinesDeleted();
+                    repoFileCommit.save();
+
                     filesCommitted.add(repoFile);
                 }
             }
-
-            repoCommit.save();
 
             PCALinkageService.linkCommitToPrograms(repoCommit);
 

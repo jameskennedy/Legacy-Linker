@@ -3,10 +3,13 @@ package models;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.Transient;
 
 import org.apache.commons.lang.StringUtils;
@@ -20,18 +23,31 @@ import edu.nyu.cs.javagit.api.commands.GitLogResponse.Commit;
 @Entity
 public class RepoCommit extends Model implements Comparable<RepoCommit> {
 
-    @Transient private static final String SVN_REV_TOKEN = "git-svn-id:";
-    @Unique @Index(name = "shaIndex") @Required public String sha;
+    @Transient
+    private static final String SVN_REV_TOKEN = "git-svn-id:";
+    @Unique
+    @Index(name = "shaIndex")
+    @Required
+    public String sha;
     public Integer svnRevision;
     public String svnURL;
     public String author;
-    @Required @Lob public String message;
-    @Required public Date date;
-    @ManyToOne public PCAProgram program;
+    @Required
+    @Column(length = 800)
+    public String message;
+    @Required
+    public Date date;
+    @ManyToOne
+    public PCAProgram program;
     public Integer linesAdded;
     public Integer linesRemoved;
 
-    @Transient public String toolTip;
+    @OneToMany(mappedBy = "commit", orphanRemoval = true)
+    @OrderBy("linesAdded DESC")
+    List<RepoFileCommit> files;
+
+    @Transient
+    public String toolTip;
 
     public static SimpleDateFormat DF = new SimpleDateFormat("E MMM d HH:mm:ss yyyy Z");
 
@@ -41,6 +57,10 @@ public class RepoCommit extends Model implements Comparable<RepoCommit> {
         author = author.substring(0, author.indexOf(" "));
         message = gitCommit.getMessage() == null ? "[No message]" : gitCommit.getMessage().trim();
         parseSVNRevision();
+        if (message.length() > 800) {
+            message = message.substring(0, 800);
+
+        }
         // Expecting format: Sat Dec 3 23:58:57 2011 +0000
         date = DF.parse(gitCommit.getDateString());
         linesAdded = gitCommit.getLinesInserted();
@@ -49,12 +69,6 @@ public class RepoCommit extends Model implements Comparable<RepoCommit> {
 
     public String getToolTip() {
         return toolTip;
-    }
-
-    @Override
-    public String toString() {
-        return "RepoCommit [sha=" + sha + ", date=" + date + ", svnRevision=" + svnRevision + ", author=" + author
-                        + ", message=" + StringUtils.abbreviate(message, 20) + "]";
     }
 
     private void parseSVNRevision() {
@@ -78,6 +92,12 @@ public class RepoCommit extends Model implements Comparable<RepoCommit> {
     public boolean sharedInRemoteRepository() {
         // TODO: Current implementation assuming SVN bridge
         return svnRevision != null;
+    }
+
+    @Override
+    public String toString() {
+        return "RepoCommit [sha=" + sha + ", date=" + date + ", svnRevision=" + svnRevision + ", author=" + author
+                        + ", message=" + StringUtils.abbreviate(message, 20) + "]";
     }
 
     @Override

@@ -4,11 +4,15 @@ table {
 }
 
 table.content {
-	width:100%;
+	width:98%;
 }
 
 table.content td {
 	vertical-align: top;
+}
+
+h2 {
+	margin-top: 0px;
 }
 
 h4 {
@@ -16,6 +20,9 @@ h4 {
 	text-align: center;
 }
 
+#headerPanel {
+	margin: 0.5em;
+}
 #searchPanel {
 	float:right;
 	width: 200px;
@@ -23,6 +30,7 @@ h4 {
 
 #linkPanel {
 	width: 460px;
+	padding-bottom: 200px;
 }
 
 #historyPanel {
@@ -35,10 +43,11 @@ h4 {
 }
 
 .classLink td {
-	padding: 4px 2px 0px 2px;
+	padding: 4px 2px 2px 2px;
 }
 .classLink:hover {
 	border: solid 1px black;
+	background: #fff;
 }
 .commitPanel {
 	border: solid 1px black;
@@ -56,13 +65,37 @@ h4 {
 	padding: 2px;
 }
 
+.commitFiles {
+	font-size: 9pt;
+	background: #baedff;
+	padding: 2px 4px;
+}
+
+.showNotRelevantLink {
+	float: right;
+}
+
+.notRelevant {
+	display: none;
+}
+
+.relevant {
+	font-weight: bold;
+}
+
+.commitFile td {
+	padding-right: 10px;
+}
+
 .commitBody {
-	background: #eeeae0;
+	background: #FFFF99;
 	padding: 0.5em;
 }
 
 .commitAuthor {
 	text-align: right;
+	font-weight: bold;
+	font-family: courier;
 }
 
 .methodName {
@@ -84,14 +117,24 @@ h4 {
 }
 
 #programAuthorChart {
-	border: solid 1px black;
 	margin-bottom: 0.5em;
 	text-align: center;
 }
+
 #floatingAuthorChart {
 	position: absolute;
 	left: 460px;
 	border: solid 1px black;
 	background: #fff
+}
+
+/* Used to cover border of floaingAuthorChart at top left corner. */
+.shim {
+	position: relative;
+	left: -5px;
+	width: 10px;
+	height: 23px;
+	background: #fff;
+	z-index: 1000;
 }
 

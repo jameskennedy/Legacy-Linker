@@ -3,10 +3,10 @@ package models;
 import java.io.File;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 
 import play.data.validation.Required;
 import play.data.validation.Unique;
@@ -15,13 +15,19 @@ import play.db.jpa.Model;
 @Entity
 public class RepoFile extends Model implements Comparable<RepoFile> {
 
-    @Required @ManyToOne public GITRepository repository;
+    @Required
+    @ManyToOne
+    public GITRepository repository;
 
-    @Required @Unique("repository, path") public String path;
+    @Required
+    @Unique("repository, path")
+    public String path;
 
     public Integer lines;
 
-    @ManyToMany(fetch = FetchType.LAZY) public List<RepoCommit> commits;
+    // @ManyToMany(fetch = FetchType.LAZY) public List<RepoCommit> commits;
+    @OneToMany(mappedBy = "file", cascade = { CascadeType.REMOVE }, orphanRemoval = true)
+    public List<RepoFileCommit> commits;
 
     // public List<RepoCommit> commits;
 

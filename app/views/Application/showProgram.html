@@ -50,6 +50,11 @@
 		var title = classRow.children("td.className").text();
 		$('#floatingAuthorChart').css("top", offset.top);
 		renderAuthorChart(authorMap, '#floatingAuthorChart', title);
+		$('#floatingAuthorChart').prepend('<div class="shim">&nbsp;</div>').css('display','block');;
+	}
+	
+	function hideFloatingAuthorChart() {
+		$('#floatingAuthorChart').html('').css('display','none');
 	}
 </script>
 #{/set}
@@ -100,7 +105,7 @@
 			
 	        	<tr id="classLink_${link_index}" class="classLink" 
 	        			onmouseover="renderFloatingAuthorChart(${link.getAuthorLinesMapAsJSON()}, ${link_index})"
-	        			onmouseout="$('#floatingAuthorChart').html('')">
+	        			onmouseout="hideFloatingAuthorChart()">
 	        		<td><input id="${link.id}" class="selectInput"  type="checkbox" name="select${link.id}" ${classSelection.contains(link.id) ? 'checked':''}/></td>
 	        		<td title="Line linkage ${link.lineCoverage().format('0.00')}%">${link.linkLines}/${link.lineTotal}</td>
 	        		<td class="className ${link.indirect ? 'indirect' : ''}" title="${classTip}">${link.className}</td>
@@ -141,15 +146,19 @@
 					
 					});
 				
-			   	$('#commitList').load(getCommits({programName: '${program.name}', classSelection: selection}));
+			   	$('#commitList').load(getCommits({programName: '${program.name}', classSelection: selection}), function() {
+			   		bindShowAllLinks();
+			   	});
+			   	
+			   
 			   	
 			   	jQuery.getJSON(getProgramAuthorship({programName: '${program.name}', classSelection: selection}), function(data, textStatus, jqXHR) {
 			   		renderAuthorChart(data, '#programAuthorChart', 'Authors of selected classes');
-			   	})
+			   	});
 			   	
 			}
 		
-			document.body.onload = function() {
+			window.onload = function() {
 				reloadCommits();
 			}
 			
@@ -159,6 +168,22 @@
 				});
 			
 			
+			<!-- Add the Show All/Show Relevant functionality -->
+			bindShowAllLinks = function() {
+				$(".showNotRelevantLink").click(function() {
+			   		var showingAll = this.text == "Show relevant";
+			   		var commitId = this.id;
+			   		//alert(showingAll + ' ' + commitId);
+			   		if (showingAll) {
+			   			$('.notRelevant' + commitId).css("display","none");
+			   			this.innerHTML = 'Show all';
+			   		} else {
+			   			$('.notRelevant' + commitId).css("display","table-row");
+			   			this.innerHTML ='Show relevant';
+			   		}
+			   		return false;
+			   	});
+			}
 			
 		</script>
 	</td>
@@ -169,6 +194,5 @@
 	</tr>
 	
 	<div id="floatingAuthorChart" >
-
 	</div>
 </table>

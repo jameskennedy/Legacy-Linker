@@ -82,12 +82,11 @@ public class PCALinkageService {
                     typeName = type.getName();
                     classLineCount = type.getEndLine() - type.getBeginLine() + 1;
                     JavadocComment javaDoc = type.getJavaDoc();
-                    List<String> legacyProgramRefs = parseLegacyPrograms(javaDoc == null ? "" : javaDoc.getContent());
+                    Set<String> legacyProgramRefs = parseLegacyPrograms(javaDoc == null ? "" : javaDoc.getContent());
                     for (String programName : legacyProgramRefs) {
                         PCAProgram program = PCAProgram.find("byName", programName).first();
                         if (null == program) {
-                            program = new PCAProgram(programName, null, author);
-                            program.save();
+                            continue;
                         }
 
                         PCAProgramClassLink classLink = new PCAProgramClassLink();
@@ -131,7 +130,7 @@ public class PCALinkageService {
                     MethodDeclaration method = member;
                     int methodLineTotal = method.getEndLine() - method.getBeginLine() + 1;
                     JavadocComment javaDoc = method.getJavaDoc();
-                    List<String> legacyProgramRefs = parseLegacyPrograms(javaDoc == null ? null : javaDoc.getContent());
+                    Set<String> legacyProgramRefs = parseLegacyPrograms(javaDoc == null ? null : javaDoc.getContent());
 
                     Set<String> alreadyProcessed = new HashSet<String>();
                     for (String programName : legacyProgramRefs) {
@@ -231,12 +230,12 @@ public class PCALinkageService {
         return null;
     }
 
-    private static List<String> parseLegacyPrograms(final String comment) {
+    private static Set<String> parseLegacyPrograms(final String comment) {
         if (null == comment) {
-            return Collections.EMPTY_LIST;
+            return Collections.EMPTY_SET;
         }
 
-        List<String> programs = new ArrayList<String>();
+        Set<String> programs = new HashSet<String>();
         Matcher matcher = LEGACY_PROGRAM.matcher(comment);
         while (matcher.find()) {
             programs.add(matcher.group(1));

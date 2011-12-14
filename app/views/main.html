@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  "http://www.w3.org/TR/html4/strict.dtd">
 <html>
     <head>
         <title>#{get 'title' /}</title>
@@ -11,8 +10,9 @@
         #{get 'moreScripts' /}
     </head>
     <body>
-    	<H1> #{get 'title' /} </H1>
-		<hr/>
+    	<div id="titleHeader">
+	    	#{get 'title' /}
+		</div>
 		
 		#{if flash.error}
     		<p style="color:#c00">

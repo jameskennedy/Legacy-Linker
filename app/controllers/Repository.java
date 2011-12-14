@@ -1,11 +1,19 @@
 package controllers;
 
-import git.ParseRepositoryJob;
+import jobs.ImportPCAProgramsJob;
+import jobs.ParseRepositoryJob;
 import models.GITRepository;
+import play.libs.F.Action;
 import play.libs.F.Promise;
 import play.mvc.Controller;
 import services.RepositoryService;
 
+/**
+ * Controller for the page that manages the GIT repository.
+ * 
+ * @author james.kennedy
+ * 
+ */
 public class Repository extends Controller {
 
     private static Promise promise;
@@ -31,8 +39,16 @@ public class Repository extends Controller {
         String status = determineStatus();
 
         if (status.equals("Idle")) {
-            ParseRepositoryJob parseJob = new ParseRepositoryJob();
-            promise = parseJob.now();
+            ImportPCAProgramsJob importProgramJob = new ImportPCAProgramsJob();
+            importProgramJob.now().onRedeem(new Action() {
+
+                @Override
+                public void invoke(final Object result) {
+                    ParseRepositoryJob parseJob = new ParseRepositoryJob();
+                    promise = parseJob.now();
+                }
+
+            });
         }
 
         redirect("Repository.index");
@@ -44,7 +60,7 @@ public class Repository extends Controller {
     public synchronized static void wipe() {
         RepositoryService.wipeRepositoryData();
 
-        redirect("Repository.index");
+        index();
     }
 
     private static String determineStatus() {
