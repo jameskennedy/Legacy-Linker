@@ -20,14 +20,6 @@ h4 {
 	text-align: center;
 }
 
-#headerPanel {
-	margin: 0.5em;
-}
-#searchPanel {
-	float:right;
-	width: 200px;
-}
-
 #linkPanel {
 	width: 460px;
 	padding-bottom: 200px;

@@ -1,34 +1,32 @@
 #{extends 'main.html' /}
-#{set title:'TLM FCA History' /}
+#{set title:'PCA Program Search' /}
 
-PCA Program:
-
-#{form @Application.index(), id:'searchForm' }
-    <input type="text" name="programName" value="${programName ?: 'MRCPSO06'}" /> 
-    <input id="searchSubmit" type="submit" value="Search" />
-    <input id="pageInput" type="hidden" name="page" value="${page}"/>
-#{/form}
-
-#{if results != null && results.isEmpty()}
-	No matching programs found.
-#{/if}
-
-#{if results || page > 1}
-<div class="navBar">
-	Page: <span id="pageDisplay">${page}</span>
-	<a  id="previousLink" href="#">Previous</a>
-	<a id="nextLink" href="#" >Next</a>
- </div>
-#{/if}
-
-#{if results}
-	<table>
-		<tr><th>Program</th><th>Author</th><th>Description</th><th>FCA Links</th>
-		#{list items:results, as:'pcaProgram' }
-        	<tr><td><a href="@{Application.showProgram(pcaProgram.name)}">${pcaProgram.name}</a></td><td>${pcaProgram.author}</td><td>${pcaProgram.description}</td><td>${pcaProgram.javaLinks.size()}</td></tr>
-    	#{/list}
-    </table>
-#{/if}
+<div class="content">
+	#{if results != null && results.isEmpty()}
+		No matching programs found.
+	#{/if}
+	
+	#{if results == null}
+		You can enter a partial program name in the form input above. Partial matches will appear in a list here.
+	#{/if}
+	
+	#{if results || page > 1}
+	<div class="navBar">
+		Page: <span id="pageDisplay">${page}</span>
+		<a  id="previousLink" href="#">Previous</a>
+		<a id="nextLink" href="#" >Next</a>
+	 </div>
+	#{/if}
+	
+	#{if results}
+		<table>
+			<tr><th>Program</th><th>Author</th><th>Description</th><th>FCA Links</th>
+			#{list items:results, as:'pcaProgram' }
+	        	<tr><td><a href="@{Application.showProgram(pcaProgram.name)}">${pcaProgram.name}</a></td><td>${pcaProgram.author}</td><td>${pcaProgram.description}</td><td>${pcaProgram.javaLinks.size()}</td></tr>
+	    	#{/list}
+	    </table>
+	#{/if}
+</div>
 
 <script type="text/javascript">
 var page = ${page};

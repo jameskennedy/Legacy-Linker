@@ -10,12 +10,35 @@
         #{get 'moreScripts' /}
     </head>
     <body>
+	    <div id="headerPanel">
+	
+			<div id="searchPanel">
+				#{form @Application.index(), id:'searchForm' }
+					<span class ="formLabel"> PCA Program Search:</span>
+				    <input type="text" name="programName" value="${program?.name ?: programNameNormalized}" /> 
+				    <input id="searchSubmit" type="submit" value="Search" />
+				    <input id="pageInput" type="hidden" name="page" value="${page}"/>
+				#{/form}
+			</div>
+			<table>
+				<tr>
+					<td class ="formLabel">Most recent commit:</td>
+					<td class="dateCell">Rev. ${repository.svnRevision} ${repository.lastCommitDate?.since(true)} </td>
+				</tr>
+				<tr>
+					<td class ="formLabel">First commit:</td>
+					<td  class="dateCell">${repository.earliestCommitDate.format('MMM d, yyyy h:mm a')}</td>
+				</tr>
+			</table>
+		
+		</div>
+	
     	<div id="titleHeader">
 	    	#{get 'title' /}
 		</div>
 		
 		#{if flash.error}
-    		<p style="color:#c00">
+    		<p style="color:#c00; margin: 0.5em;">
         	${flash.error}
     		</p>
 		#{/if}

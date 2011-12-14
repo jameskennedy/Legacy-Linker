@@ -42,14 +42,16 @@ public class Application extends Controller {
      */
     @Transactional(readOnly = true)
     public static void index(@Match("\\s*\\w{0,8}\\s*") final String programName, final int page) {
+        GITRepository repository = GITRepository.getMainRepository();
+
         if (validation.hasErrors()) {
             flash.error("Oops, program name is invalid.");
-            render();
+            render(repository, page);
             return;
         }
 
         if (StringUtils.isEmpty(programName)) {
-            render();
+            render(repository, page);
             return;
         }
 
@@ -66,7 +68,7 @@ public class Application extends Controller {
             results = null;
         }
 
-        render(programNameNormalized, results, page);
+        render(repository, programNameNormalized, results, page);
     }
 
     /**

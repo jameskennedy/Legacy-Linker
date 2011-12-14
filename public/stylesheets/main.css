@@ -4,6 +4,17 @@ body, html {
 	
 }
 
+#headerPanel {
+	padding: 0.5em;
+	background: #FC4;
+}
+
+#searchPanel {
+	float:right;
+	margin: 0.5em;
+}
+
+
 #titleHeader {
 	background: #FFFF99;
 	padding: 0.5em;
@@ -12,6 +23,19 @@ body, html {
 	font-weight: bold;
 }
 
+
 .content {
 	margin: 0.5em;
+}
+
+.formLabel {
+	font-weight: bold;
+	text-align: right;
+	padding-right: 1em;
+}
+
+.dateCell {
+	font-family: courier;
+	font-size: 80%;
+	
 }
