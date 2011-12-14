@@ -1,8 +1,14 @@
 /.classpath
 /.project
+/eclipse/classes
+/public/crud
+/crud
+/conf/crud
 /tmp
 /modules
 /lib
 /test-result
 /logs
 /db
+/dataSnapshots
+/.DS_Store
