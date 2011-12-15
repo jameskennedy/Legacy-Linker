@@ -1,10 +1,8 @@
 package controllers;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -22,6 +20,8 @@ import play.data.validation.Match;
 import play.data.validation.Required;
 import play.db.jpa.Transactional;
 import play.mvc.Controller;
+import services.AuthorshipService;
+import services.PCALinkageService;
 import services.RepositoryService;
 
 /**
@@ -88,14 +88,13 @@ public class Application extends Controller {
             error(404, "Program " + programNameNormalized + " cannot be found.");
         }
 
-        List<PCAProgramClassLink> linkList = PCAProgramClassLink.find(
-                        "methodName is null and program = ? order by linkLines desc", program).fetch();
+        List<PCAProgramClassLink> linkList = program.getClassLinks();
 
         for (PCAProgramClassLink classLink : linkList) {
             RepositoryService.calculateAuthorship(classLink);
         }
 
-        List<Long> classSelection = defaultClassSelection(linkList);
+        List<Long> classSelection = PCALinkageService.defaultClassSelection(linkList);
 
         render(repository, program, linkList, classSelection);
     }
@@ -110,8 +109,8 @@ public class Application extends Controller {
     public static void relevantCommits(@Required final String programName, @As(",") final List<Long> classSelection) {
         Logger.info("Reloading commits for program %s.", programName);
 
-        List<PCAProgramClassLink> selectedClassLinks = new ArrayList<PCAProgramClassLink>();
-        PCAProgram program = getSelectedClassLinksForProgram(programName, classSelection, selectedClassLinks);
+        PCAProgram program = PCAProgram.findById(programName.trim().toUpperCase());
+        List<PCAProgramClassLink> selectedClassLinks = program.getSelectedClassLinks(classSelection);
 
         Set<RepoCommit> commits = getFileCommits(program, selectedClassLinks);
 
@@ -127,51 +126,12 @@ public class Application extends Controller {
      * @return Streams out the resulting table in JSON format.
      */
     public static void getProgramAuthorship(@Required final String programName, @As(",") final List<Long> classSelection) {
-        List<PCAProgramClassLink> selectedClassLinks = new ArrayList<PCAProgramClassLink>();
-        getSelectedClassLinksForProgram(programName, classSelection, selectedClassLinks);
+        new ArrayList<PCAProgramClassLink>();
+        PCAProgram program = PCAProgram.findById(programName.trim().toUpperCase());
+        List<PCAProgramClassLink> selectedClassLinks = program.getSelectedClassLinks(classSelection);
 
-        Map<String, Integer> programAuthorChart = createProgramAuthorChart(selectedClassLinks);
+        Map<String, Integer> programAuthorChart = AuthorshipService.createProgramAuthorChart(selectedClassLinks);
         renderJSON(programAuthorChart);
-    }
-
-    private static PCAProgram getSelectedClassLinksForProgram(String programName, final List<Long> classSelection,
-                    final List<PCAProgramClassLink> selectedClassLinks) {
-        programName = programName.trim().toUpperCase();
-        PCAProgram program = PCAProgram.findById(programName);
-        if (null != program) {
-            List<PCAProgramClassLink> linkList = PCAProgramClassLink.find(
-                            "methodName is null and program = ? order by linkLines desc", program).fetch();
-
-            for (PCAProgramClassLink classLink : linkList) {
-                if (classSelection.contains(classLink.getId())) {
-                    selectedClassLinks.add(classLink);
-                }
-            }
-
-        }
-        return program;
-    }
-
-    private static Map<String, Integer> createProgramAuthorChart(final List<PCAProgramClassLink> selectedClassLinks) {
-        Map<String, Integer> result = new HashMap<String, Integer>();
-        for (PCAProgramClassLink classLink : selectedClassLinks) {
-            float coverage = classLink.lineCoverage();
-            // TODO: expensive to always calculate on the fly?
-            RepositoryService.calculateAuthorship(classLink);
-            for (Entry<String, Integer> entry : classLink.authorLinesMap.entrySet()) {
-                String author = entry.getKey();
-                Integer lines = result.get(author);
-                if (null == lines) {
-                    lines = 0;
-                }
-
-                // TODO Rough approximation. need to tally actually lines that
-                // contribute only
-                lines += Math.round(coverage / 100f * entry.getValue());
-                result.put(author, lines);
-            }
-        }
-        return result;
     }
 
     /**
@@ -201,23 +161,6 @@ public class Application extends Controller {
         commits.addAll(program.commitLinks);
 
         return commits;
-    }
-
-    /**
-     * Initialize a class link id selection by choosing only the ids out of the
-     * given linkList where the linkList has adequate program coverage.
-     * 
-     * @param linkList
-     * @return List of PCAProgramClassLink ids.
-     */
-    private static List<Long> defaultClassSelection(final List<PCAProgramClassLink> linkList) {
-        List<Long> selection = new ArrayList<Long>();
-        for (PCAProgramClassLink link : linkList) {
-            if (link.lineCoverage() > 60f) {
-                selection.add(link.getId());
-            }
-        }
-        return selection;
     }
 
 }

@@ -22,9 +22,12 @@ public class PCALinkageJob extends Job {
             Logger.info("START: Updating PCA links...");
             int filesProcessed = PCALinkageService.updateFileLinkage();
             Logger.info("STOP: Updated PCA links for %d files.", filesProcessed);
+
+            new AssignAuthorsJob().now();
         } finally {
             inProgress = Boolean.FALSE;
         }
+
     }
 
 }

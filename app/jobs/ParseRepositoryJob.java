@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.persistence.FlushModeType;
 
@@ -38,111 +39,116 @@ public class ParseRepositoryJob extends Job {
             inProgress = Boolean.TRUE;
         }
 
-        ImportPCAProgramsJob pImport = new ImportPCAProgramsJob();
         try {
-            pImport.now().get();
-        } catch (Exception e) {
-            Logger.error(e, "STOP: Cannot synchronize with repository.");
-            return;
-        }
 
-        long startTime = System.currentTimeMillis();
-
-        Logger.info("START: Git repository sync...");
-
-        GITRepository repo = GITRepository.getMainRepository();
-
-        RepoCommit.em().setFlushMode(FlushModeType.COMMIT);
-
-        if (repo.location == null) {
-            Logger.error("STOP: Cannot synchronize with repository that has a null location.");
-            return;
-        }
-
-        Logger.debug("Synchronizing history with %s...", repo.location);
-
-        File repositoryDirectory = new File(repo.location);
-        DotGit dotGit = DotGit.getInstance(repositoryDirectory);
-
-        if (!repositoryDirectory.exists() || !dotGit.existsInstance(repositoryDirectory)) {
-            Logger.error("STOP: Cannot synchronize with non-existant repository %s.", repo.location);
-            return;
-        }
-
-        GitLogOptions gitLogOptions = new GitLogOptions();
-        gitLogOptions.setOptOrderingReverse(true);
-        gitLogOptions.setOptFileDetails(true);
-
-        // TODO: How come this doesn't work?
-        if (repo.lastCommitParsed != null) {
-            Logger.info("Only fetching changes after " + repo.lastCommitParsed);
-            gitLogOptions.setOptLimitCommitSince(true, repo.lastCommitParsed);
-        }
-
-        // TODO: DEBUG
-        // gitLogOptions.setOptLimitCommitMax(true, 200);
-
-        List<Commit> commitList = null;
-        try {
-            commitList = dotGit.getLog(gitLogOptions);
-        } catch (JavaGitException e) {
-            Logger.error(e, "STOP: Cannot synchronize with GITrepository %s.", repo.location);
-            return;
-        } catch (IOException e) {
-            Logger.error(e, "STOP: IOException synchronizing with GIT repo %s.", repo.location);
-            return;
-        }
-
-        int newCommits = 0;
-
-        for (Commit commit : commitList) {
+            ImportPCAProgramsJob pImport = new ImportPCAProgramsJob();
             try {
-                RepoCommit processed = processCommit(commit, repo);
-                if (processed == null) {
-                    continue;
-                }
-
-                newCommits++;
-                if (repo.svnRevision == null || (repo.svnRevision < processed.svnRevision)) {
-                    repo.svnRevision = processed.svnRevision;
-                }
-
-                repo.lastCommitParsed = processed.sha;
-
-                if (repo.lastCommitDate == null || repo.lastCommitDate.before(processed.date)) {
-                    repo.lastCommitDate = processed.date;
-                }
-
-                if (newCommits % 500 == 0) {
-                    logPerformance(startTime, newCommits);
-
-                    RepoCommit.em().getTransaction().commit();
-                    RepoCommit.em().getTransaction().begin();
-                    RepoCommit.em().flush();
-                    RepoCommit.em().clear();
-                }
-            } catch (ParseException e) {
-                Logger.error(e, "Failed to parse commit %s. Ending sync at this point.", commit.getSha());
-                break;
+                pImport.now().get(60, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                Logger.error(e, "STOP: Cannot synchronize with repository.");
+                return;
             }
-        }
 
-        if (repo.earliestCommitDate == null) {
-            RepoCommit firstCommit = RepoCommit.find("order by date").first();
-            if (null != firstCommit) {
-                repo.earliestCommitDate = firstCommit.date;
+            long startTime = System.currentTimeMillis();
+
+            Logger.info("START: Git repository sync...");
+
+            GITRepository repo = GITRepository.getMainRepository();
+
+            RepoCommit.em().setFlushMode(FlushModeType.COMMIT);
+
+            if (repo.location == null) {
+                Logger.error("STOP: Cannot synchronize with repository that has a null location.");
+                return;
             }
+
+            Logger.debug("Synchronizing history with %s...", repo.location);
+
+            File repositoryDirectory = new File(repo.location);
+            DotGit dotGit = DotGit.getInstance(repositoryDirectory);
+
+            if (!repositoryDirectory.exists() || !dotGit.existsInstance(repositoryDirectory)) {
+                Logger.error("STOP: Cannot synchronize with non-existant repository %s.", repo.location);
+                return;
+            }
+
+            GitLogOptions gitLogOptions = new GitLogOptions();
+            gitLogOptions.setOptOrderingReverse(true);
+            gitLogOptions.setOptFileDetails(true);
+
+            // TODO: How come this doesn't work?
+            if (repo.lastCommitParsed != null) {
+                Logger.info("Only fetching changes after " + repo.lastCommitParsed);
+                gitLogOptions.setOptLimitCommitSince(true, repo.lastCommitParsed);
+            }
+
+            // TODO: DEBUG
+            gitLogOptions.setOptLimitCommitMax(true, 200);
+
+            List<Commit> commitList = null;
+            try {
+                commitList = dotGit.getLog(gitLogOptions);
+            } catch (JavaGitException e) {
+                Logger.error(e, "STOP: Cannot synchronize with GITrepository %s.", repo.location);
+                return;
+            } catch (IOException e) {
+                Logger.error(e, "STOP: IOException synchronizing with GIT repo %s.", repo.location);
+                return;
+            }
+
+            int newCommits = 0;
+
+            for (Commit commit : commitList) {
+                try {
+                    RepoCommit processed = processCommit(commit, repo);
+                    if (processed == null) {
+                        continue;
+                    }
+
+                    newCommits++;
+                    if (repo.svnRevision == null || (repo.svnRevision < processed.svnRevision)) {
+                        repo.svnRevision = processed.svnRevision;
+                    }
+
+                    repo.lastCommitParsed = processed.sha;
+
+                    if (repo.lastCommitDate == null || repo.lastCommitDate.before(processed.date)) {
+                        repo.lastCommitDate = processed.date;
+                    }
+
+                    if (newCommits % 500 == 0) {
+                        logPerformance(startTime, newCommits);
+
+                        RepoCommit.em().getTransaction().commit();
+                        RepoCommit.em().getTransaction().begin();
+                        RepoCommit.em().flush();
+                        RepoCommit.em().clear();
+                    }
+                } catch (ParseException e) {
+                    Logger.error(e, "Failed to parse commit %s. Ending sync at this point.", commit.getSha());
+                    break;
+                }
+            }
+
+            if (repo.earliestCommitDate == null) {
+                RepoCommit firstCommit = RepoCommit.find("order by date").first();
+                if (null != firstCommit) {
+                    repo.earliestCommitDate = firstCommit.date;
+                }
+            }
+
+            repo.save();
+
+            logPerformance(startTime, newCommits);
+
+            Logger.info("STOP Repository sync complete.");
+
+            // Kick-off the linkage job
+            PCALinkageJob linkJob = new PCALinkageJob();
+            linkJob.now();
+        } finally {
+            inProgress = Boolean.FALSE;
         }
-
-        repo.save();
-
-        logPerformance(startTime, newCommits);
-
-        Logger.info("STOP Repository sync complete.");
-
-        // Kick-off the linkage job
-        PCALinkageJob linkJob = new PCALinkageJob();
-        linkJob.now();
     }
 
     private void logPerformance(final long startTime, final int newCommits) {

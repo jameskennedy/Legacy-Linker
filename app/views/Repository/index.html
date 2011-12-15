@@ -22,13 +22,18 @@
     <input type="submit" value="Change" ${disableAction ? 'disabled=true' : ''}"/>
 </form>
 
-#{if currentRepository}
+#{if repository}
 <h3>Actions</h3>
 Status: ${status}
 
 <form action="@{Repository.syncWithRepository()}" method="POST">
     <input type="submit" value="Sync with git" ${disableAction ? 'disabled=true' : ''}"/>
 </form>
+
+<form action="@{Repository.recalculateProgramAuthors()}" method="POST">
+    <input type="submit" value="Recalculate Program Authors" ${disableAction ? 'disabled=true' : ''}"/>
+</form>
+
 
 <form action="@{Repository.wipeRepoData()}" method="POST">
     <input type="submit" value="Wipe RepoData" ${disableAction ? 'disabled=true' : ''}"/>

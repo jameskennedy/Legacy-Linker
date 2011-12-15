@@ -1,7 +1,9 @@
 package controllers;
 
+import jobs.AssignAuthorsJob;
 import jobs.ParseRepositoryJob;
 import models.GITRepository;
+import models.PCAProgram;
 import play.libs.F.Promise;
 import play.mvc.Controller;
 import services.PCALinkageService;
@@ -19,8 +21,8 @@ public class Repository extends Controller {
 
     public static void index() {
         String status = determineStatus();
-        GITRepository currentRepository = GITRepository.getMainRepository();
-        render(status, currentRepository);
+        GITRepository repository = GITRepository.getMainRepository();
+        render(status, repository);
     }
 
     public static void changeRepository(final String repositoryPath, final String repositoryName) {
@@ -31,12 +33,20 @@ public class Repository extends Controller {
         mainRepository.lastCommitParsed = null;
         mainRepository.save();
 
-        redirect("Repository.index");
+        index();
     }
 
     public static void syncWithRepository() {
         ParseRepositoryJob parseJob = new ParseRepositoryJob();
         promise = parseJob.now();
+        index();
+    }
+
+    public static void recalculateProgramAuthors() {
+        PCAProgram.em().createQuery("Update PCAProgram set needsAuthorUpdate = true").executeUpdate();
+        PCAProgram.em().flush();
+        AssignAuthorsJob job = new AssignAuthorsJob();
+        promise = job.now();
         index();
     }
 

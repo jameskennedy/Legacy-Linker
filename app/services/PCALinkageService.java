@@ -117,6 +117,8 @@ public class PCALinkageService {
 
                         classProgramTable.put(programName, classLink);
 
+                        flagProgramForAuthorUpdate(program);
+
                         Logger.debug("[%d/%d] Linked class %s", filesProcessed, filesToProcess, classLink);
                     }
                 } else {
@@ -194,6 +196,8 @@ public class PCALinkageService {
 
                         newMethodLinks.add(methodLink);
                         methodLink.save();
+
+                        flagProgramForAuthorUpdate(program);
                     }
 
                     if (!alreadyProcessed.isEmpty()) {
@@ -236,6 +240,13 @@ public class PCALinkageService {
         return filesProcessed;
     }
 
+    private static void flagProgramForAuthorUpdate(final PCAProgram program) {
+        if (!program.needsAuthorUpdate) {
+            program.needsAuthorUpdate = true;
+            program.save();
+        }
+    }
+
     private static void logTimingStatus(final int filesProcessed, final long start) {
         if (filesProcessed > 0) {
             long stop = System.currentTimeMillis();
@@ -244,6 +255,23 @@ public class PCALinkageService {
 
             Logger.info("Processed %d files in %f seconds. Average %f", filesProcessed, time, average);
         }
+    }
+
+    /**
+     * Initialize a class link id selection by choosing only the ids out of the
+     * given linkList where the linkList has adequate program coverage.
+     * 
+     * @param linkList
+     * @return List of PCAProgramClassLink ids.
+     */
+    public static List<Long> defaultClassSelection(final List<PCAProgramClassLink> linkList) {
+        List<Long> selection = new ArrayList<Long>();
+        for (PCAProgramClassLink link : linkList) {
+            if (link.lineCoverage() > 60f) {
+                selection.add(link.getId());
+            }
+        }
+        return selection;
     }
 
     private static CompilationUnit loadJavaFile(final RepoFile file) {
@@ -297,6 +325,9 @@ public class PCALinkageService {
 
             commit.program = program;
             commit.save();
+
+            flagProgramForAuthorUpdate(program);
+
             Logger.debug("Linked program %s to commit %s", programName, commit.sha);
         }
     }

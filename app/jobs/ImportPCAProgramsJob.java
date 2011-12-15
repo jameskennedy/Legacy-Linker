@@ -53,7 +53,7 @@ public class ImportPCAProgramsJob extends Job {
 
         filesScanned = 0;
         for (String program : programNames) {
-            PCAProgram programEntity = new PCAProgram(program, null, null);
+            PCAProgram programEntity = new PCAProgram(program, null);
             programEntity.save();
             if (filesScanned++ % 500 == 0) {
                 Logger.debug("Cobol programs to save: %d", programNames.size() - filesScanned);

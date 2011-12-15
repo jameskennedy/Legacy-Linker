@@ -22,9 +22,9 @@
 	
 	#{if results}
 		<table>
-			<tr><th>Program</th><th>Author</th><th>Description</th><th>FCA Links</th>
+			<tr><th>Program</th><th>Authors</th><th>FCA Links</th>
 			#{list items:results, as:'pcaProgram' }
-	        	<tr><td><a href="@{Application.showProgram(pcaProgram.name)}">${pcaProgram.name}</a></td><td>${pcaProgram.author}</td><td>${pcaProgram.description}</td><td>${pcaProgram.javaLinks.size()}</td></tr>
+	        	<tr><td><a href="@{Application.showProgram(pcaProgram.name)}">${pcaProgram.name}</a></td><td>${pcaProgram.authors}</td><td>${pcaProgram.javaLinks.size()}</td></tr>
 	    	#{/list}
 	    </table>
 	#{/if}
