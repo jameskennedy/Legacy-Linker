@@ -22,9 +22,11 @@ public class GITRepository extends Model {
 
     public static synchronized GITRepository getMainRepository() {
         try {
-            return (GITRepository) GITRepository.findAll().get(0);
+            GITRepository mainRepo = (GITRepository) GITRepository.findAll().get(0);
+            return mainRepo;
         } catch (IndexOutOfBoundsException e) {
             GITRepository newRepo = new GITRepository();
+            newRepo.location = "/triad";
             newRepo.save();
             return newRepo;
         }

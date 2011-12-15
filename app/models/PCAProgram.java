@@ -3,14 +3,15 @@ package models;
 import java.util.List;
 
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
-import play.db.jpa.Model;
+import play.db.jpa.GenericModel;
 
 @Entity
-// TODO don't extend Model, use GenericModel and make name the key column
-public class PCAProgram extends Model {
+public class PCAProgram extends GenericModel {
 
+    @Id
     public String name;
     public String description;
     public String author;
@@ -26,6 +27,11 @@ public class PCAProgram extends Model {
         this.description = description;
         this.author = author;
 
+    }
+
+    @Override
+    public Object _key() {
+        return name;
     }
 
     @Override

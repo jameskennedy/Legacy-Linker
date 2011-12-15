@@ -17,7 +17,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,7 +39,7 @@ import play.Logger;
 public class PCALinkageService {
 
     private static Pattern LEGACY_PROGRAM = Pattern.compile("@legacy[\\s]*([a-zA-Z][a-zA-Z0-9]{2,7})(\\s|$)");
-    private static Pattern COMMIT_PROGRAM = Pattern.compile("(^|\\s)([A-Z][A-Z0-9]{2,7})(\\s|$)");
+    private static Pattern COMMIT_PROGRAM = Pattern.compile("(^|\\W)([A-Z][A-Z0-9]{2,7})(\\W|$)");
 
     /**
      * Identify all the RepoFiles that are not fresh with respect to recent
@@ -105,7 +103,7 @@ public class PCALinkageService {
                     JavadocComment javaDoc = type.getJavaDoc();
                     Set<String> legacyProgramRefs = parseLegacyPrograms(javaDoc == null ? "" : javaDoc.getContent());
                     for (String programName : legacyProgramRefs) {
-                        PCAProgram program = PCAProgram.find("byName", programName).first();
+                        PCAProgram program = PCAProgram.findById(programName);
                         if (null == program) {
                             continue;
                         }
@@ -160,10 +158,9 @@ public class PCALinkageService {
                         }
                         alreadyProcessed.add(programName);
 
-                        PCAProgram program = PCAProgram.find("byName", programName).first();
+                        PCAProgram program = PCAProgram.findById(programName);
                         if (null == program) {
-                            program = new PCAProgram(programName, null, author);
-                            program.save();
+                            continue;
                         }
 
                         PCAProgramMethodLink methodLink = new PCAProgramMethodLink();
@@ -293,7 +290,7 @@ public class PCALinkageService {
 
         while (matcher.find()) {
             String programName = matcher.group(2);
-            PCAProgram program = PCAProgram.find("byName", programName).first();
+            PCAProgram program = PCAProgram.findById(programName);
             if (null == program) {
                 continue;
             }
@@ -301,56 +298,6 @@ public class PCALinkageService {
             commit.program = program;
             commit.save();
             Logger.debug("Linked program %s to commit %s", programName, commit.sha);
-        }
-    }
-
-    public static void loadProgramsFromDisk(final File rootDir) {
-        if (PCAProgram.all().first() != null) {
-            return;
-        }
-
-        if (rootDir == null || !rootDir.exists() || !rootDir.isDirectory()) {
-            throw new IllegalArgumentException(rootDir + " is not anexisting root direcotry.");
-        }
-
-        Logger.debug("Loading Cobol programs to db...");
-
-        Stack<File> fileStack = new Stack<File>();
-        fileStack.push(rootDir);
-
-        Set<String> programNames = new HashSet<String>();
-
-        int filesScanned = 0;
-        while (!fileStack.isEmpty()) {
-            File file = fileStack.pop();
-            if (file.isDirectory()) {
-                fileStack.addAll(Arrays.asList(file.listFiles()));
-                filesScanned = 0;
-                continue;
-            }
-
-            if (!file.isFile() || file.isHidden() || !file.exists()) {
-                continue;
-            }
-
-            String fileName = file.getName();
-            if (fileName.endsWith(".cpy") || fileName.endsWith(".ccp") || fileName.endsWith(".cbl")
-                            || fileName.endsWith(".proc")) {
-                programNames.add(fileName.substring(0, fileName.lastIndexOf(".")));
-            }
-
-            if (filesScanned++ % 10000 == 0) {
-                Logger.debug("Cobol programs left: %d", fileStack.size());
-            }
-        }
-
-        filesScanned = 0;
-        for (String program : programNames) {
-            PCAProgram programEntity = new PCAProgram(program, null, null);
-            programEntity.save();
-            if (filesScanned++ % 500 == 0) {
-                Logger.debug("Cobol programs to save: %d", programNames.size() - filesScanned);
-            }
         }
     }
 

@@ -1,9 +1,7 @@
 package controllers;
 
-import jobs.ImportPCAProgramsJob;
 import jobs.ParseRepositoryJob;
 import models.GITRepository;
-import play.libs.F.Action;
 import play.libs.F.Promise;
 import play.mvc.Controller;
 import services.PCALinkageService;
@@ -37,22 +35,9 @@ public class Repository extends Controller {
     }
 
     public static void syncWithRepository() {
-        String status = determineStatus();
-
-        if (status.equals("Idle")) {
-            ImportPCAProgramsJob importProgramJob = new ImportPCAProgramsJob();
-            importProgramJob.now().onRedeem(new Action() {
-
-                @Override
-                public void invoke(final Object result) {
-                    ParseRepositoryJob parseJob = new ParseRepositoryJob();
-                    promise = parseJob.now();
-                }
-
-            });
-        }
-
-        redirect("Repository.index");
+        ParseRepositoryJob parseJob = new ParseRepositoryJob();
+        promise = parseJob.now();
+        index();
     }
 
     /**

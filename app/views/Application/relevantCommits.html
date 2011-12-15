@@ -15,7 +15,7 @@
   		 </table>
   	</div>
   	<div class="commitFiles">
-  		<a id="${commit.id}" class="showNotRelevantLink" href="#" >Show All</a>
+  		<a id="${commit.sha}" class="showNotRelevantLink" href="#" >Show All</a>
   		<table>
   		#{list items:commit.files, as: 'fileCommit' }
   			%{ 
@@ -27,7 +27,7 @@
   					}
   				}
   			%}
-			<tr class="commitFile ${includeFile ? 'relevant' : 'notRelevant notRelevant' + commit.id} ${fileCommit.file.deletedInHead ? 'deleted' : ''}" 
+			<tr class="commitFile ${includeFile ? 'relevant' : 'notRelevant notRelevant' + commit.sha} ${fileCommit.file.deletedInHead ? 'deleted' : ''}" 
 					#{if fileCommit.file.deletedInHead} title="Deleted in head revision" #{/if}>
 				<td width="200px">${fileCommit.file.getName()}</td>
 		  	    <td width="40px" title="Lines added by ${fileCommit.file.getName()}">+ ${fileCommit.linesAdded}</td>

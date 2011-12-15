@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.List;
 
+import javax.persistence.FlushModeType;
+
 import models.GITRepository;
 import models.RepoCommit;
 import models.RepoFile;
@@ -13,23 +15,34 @@ import play.Logger;
 import play.jobs.Every;
 import play.jobs.Job;
 import play.jobs.OnApplicationStart;
+import services.PCALinkageService;
 import edu.nyu.cs.javagit.api.DotGit;
 import edu.nyu.cs.javagit.api.JavaGitException;
 import edu.nyu.cs.javagit.api.commands.GitLogOptions;
 import edu.nyu.cs.javagit.api.commands.GitLogResponse.Commit;
 import edu.nyu.cs.javagit.api.commands.GitLogResponse.CommitFile;
 
-@OnApplicationStart
+@OnApplicationStart(async = true)
 @Every("10mn")
 public class ParseRepositoryJob extends Job {
 
     @Override
     public void doJob() {
+        ImportPCAProgramsJob pImport = new ImportPCAProgramsJob();
+        try {
+            pImport.now().get();
+        } catch (Exception e) {
+            Logger.error(e, "STOP: Cannot synchronize with repository.");
+            return;
+        }
+
         long startTime = System.currentTimeMillis();
 
         Logger.info("START: Git repository sync...");
 
         GITRepository repo = GITRepository.getMainRepository();
+
+        RepoCommit.em().setFlushMode(FlushModeType.COMMIT);
 
         if (repo.location == null) {
             Logger.error("STOP: Cannot synchronize with repository that has a null location.");
@@ -57,7 +70,7 @@ public class ParseRepositoryJob extends Job {
         }
 
         // TODO: DEBUG
-        gitLogOptions.setOptLimitCommitMax(true, 200);
+        // gitLogOptions.setOptLimitCommitMax(true, 200);
 
         List<Commit> commitList = null;
         try {
@@ -89,6 +102,15 @@ public class ParseRepositoryJob extends Job {
                 if (repo.lastCommitDate == null || repo.lastCommitDate.before(processed.date)) {
                     repo.lastCommitDate = processed.date;
                 }
+
+                if (newCommits % 500 == 0) {
+                    logPerformance(startTime, newCommits);
+
+                    RepoCommit.em().getTransaction().commit();
+                    RepoCommit.em().getTransaction().begin();
+                    RepoCommit.em().flush();
+                    RepoCommit.em().clear();
+                }
             } catch (ParseException e) {
                 Logger.error(e, "Failed to parse commit %s. Ending sync at this point.", commit.getSha());
                 break;
@@ -104,57 +126,68 @@ public class ParseRepositoryJob extends Job {
 
         repo.save();
 
-        long endTime = System.currentTimeMillis();
-        long jobTime = (endTime - startTime) / 1000;
-        Logger.info("STOP Repository sync complete.\nProcessed %d new commits in %d seconds.", newCommits, jobTime);
+        logPerformance(startTime, newCommits);
+
+        Logger.info("STOP Repository sync complete.");
 
         // Kick-off the linkage job
         PCALinkageJob linkJob = new PCALinkageJob();
         linkJob.now();
     }
 
+    private void logPerformance(final long startTime, final int newCommits) {
+        if (newCommits > 0) {
+            long endTime = System.currentTimeMillis();
+            float jobTime = (endTime - startTime) / 1000f;
+            Logger.info("Processed %d new commits in %f seconds. Average is %f", newCommits, jobTime, jobTime
+                            / newCommits);
+        }
+    }
+
     private RepoCommit processCommit(final Commit commit, final GITRepository repo) throws ParseException {
         Logger.debug("Commit: %s %s %s", commit.getSha(), commit.getDateString(), commit.getAuthor());
-        RepoCommit repoCommit = RepoCommit.find("bySha", commit.getSha()).first();
-        if (null == repoCommit) {
-            repoCommit = new RepoCommit(commit);
-            if (!repoCommit.sharedInRemoteRepository()) {
-                // Skip commits that are local only and may still change
-                return null;
-            }
-
-            repoCommit.save();
-
-            if (commit.getFiles() != null) {
-                for (CommitFile commitFile : commit.getFiles()) {
-                    String path = commitFile.getName();
-
-                    if (!path.endsWith(".java")) {
-                        Logger.trace("Ignoring file %s", path);
-                        continue;
-                    }
-
-                    RepoFile repoFile = RepoFile.find("byRepositoryAndPath", repo, path).first();
-                    if (null == repoFile) {
-                        repoFile = new RepoFile(repo, path);
-                    }
-
-                    repoFile.linkUpdateNeeded = true;
-                    repoFile.save();
-
-                    // Associate the commit
-                    RepoFileCommit repoFileCommit = new RepoFileCommit();
-                    repoFileCommit.file = repoFile;
-                    repoFileCommit.commit = repoCommit;
-                    repoFileCommit.linesAdded = commitFile.getLinesAdded();
-                    repoFileCommit.linesRemoved = commitFile.getLinesDeleted();
-                    repoFileCommit.save();
-                }
-            }
-
-            return repoCommit;
+        RepoCommit repoCommit = RepoCommit.findById(commit.getSha());
+        if (null != repoCommit) {
+            return null;
         }
 
-        return null;
+        repoCommit = new RepoCommit(commit);
+        if (!repoCommit.sharedInRemoteRepository()) {
+            // Skip commits that are local only and may still change
+            return null;
+        }
+
+        repoCommit.save();
+
+        if (commit.getFiles() != null) {
+            for (CommitFile commitFile : commit.getFiles()) {
+                String path = commitFile.getName();
+
+                if (!path.endsWith(".java")) {
+                    Logger.trace("Ignoring file %s", path);
+                    continue;
+                }
+
+                RepoFile repoFile = RepoFile.findById(path);
+                if (null == repoFile) {
+                    repoFile = new RepoFile(repo, path);
+                }
+
+                repoFile.linkUpdateNeeded = true;
+                repoFile.save();
+
+                // Associate the commit
+                RepoFileCommit repoFileCommit = new RepoFileCommit();
+                repoFileCommit.file = repoFile;
+                repoFileCommit.commit = repoCommit;
+                repoFileCommit.linesAdded = commitFile.getLinesAdded();
+                repoFileCommit.linesRemoved = commitFile.getLinesDeleted();
+                repoFileCommit.save();
+            }
+        }
+
+        PCALinkageService.linkCommitToPrograms(repoCommit);
+
+        return repoCommit;
     }
 }

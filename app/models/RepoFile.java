@@ -5,22 +5,21 @@ import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 import play.data.validation.Required;
-import play.data.validation.Unique;
-import play.db.jpa.Model;
+import play.db.jpa.GenericModel;
 
 @Entity
-public class RepoFile extends Model implements Comparable<RepoFile> {
+public class RepoFile extends GenericModel implements Comparable<RepoFile> {
 
     @Required
     @ManyToOne
     public GITRepository repository;
 
-    @Required
-    @Unique("repository, path")
+    @Id
     public String path;
 
     public Integer lines;
@@ -36,7 +35,10 @@ public class RepoFile extends Model implements Comparable<RepoFile> {
      */
     public Boolean linkUpdateNeeded;
 
-    // public List<RepoCommit> commits;
+    @Override
+    public Object _key() {
+        return path;
+    }
 
     public RepoFile(final GITRepository repo, final String path) {
         this.path = path;

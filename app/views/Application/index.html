@@ -1,6 +1,8 @@
 #{extends 'main.html' /}
 #{set title:'PCA Program Search' /}
 
+%{ page = page ? page : 1%}
+
 <div class="content">
 	#{if results != null && results.isEmpty()}
 		No matching programs found.

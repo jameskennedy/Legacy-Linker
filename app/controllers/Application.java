@@ -82,7 +82,7 @@ public class Application extends Controller {
         GITRepository repository = GITRepository.getMainRepository();
         String programNameNormalized = programName.trim().toUpperCase();
 
-        PCAProgram program = PCAProgram.find("byName", programNameNormalized).first();
+        PCAProgram program = PCAProgram.findById(programName);
         if (null == program) {
             Logger.info("Failed to show page, %s not found.", programNameNormalized);
             error(404, "Program " + programNameNormalized + " cannot be found.");
@@ -137,7 +137,7 @@ public class Application extends Controller {
     private static PCAProgram getSelectedClassLinksForProgram(String programName, final List<Long> classSelection,
                     final List<PCAProgramClassLink> selectedClassLinks) {
         programName = programName.trim().toUpperCase();
-        PCAProgram program = PCAProgram.find("byName", programName).first();
+        PCAProgram program = PCAProgram.findById(programName);
         if (null != program) {
             List<PCAProgramClassLink> linkList = PCAProgramClassLink.find(
                             "methodName is null and program = ? order by linkLines desc", program).fetch();

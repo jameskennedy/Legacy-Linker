@@ -7,38 +7,39 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Transient;
 
 import org.apache.commons.lang.StringUtils;
-import org.hibernate.annotations.Index;
 
 import play.data.validation.Required;
-import play.data.validation.Unique;
-import play.db.jpa.Model;
+import play.db.jpa.GenericModel;
 import edu.nyu.cs.javagit.api.commands.GitLogResponse.Commit;
 
 @Entity
-public class RepoCommit extends Model implements Comparable<RepoCommit> {
+public class RepoCommit extends GenericModel implements Comparable<RepoCommit> {
+
+    private static final int MAX_MSG_LENGTH = 2000;
 
     @Transient
     private static final String SVN_REV_TOKEN = "git-svn-id:";
-    @Unique
-    @Index(name = "shaIndex")
-    @Required
+
+    @Id
     public String sha;
     public Integer svnRevision;
     public String svnURL;
     public String author;
     @Required
-    @Column(length = 800)
+    @Column(length = MAX_MSG_LENGTH)
     public String message;
     @Required
     public Date date;
     @ManyToOne
     public PCAProgram program;
+    public String programName;
     public Integer linesAdded;
     public Integer linesRemoved;
 
@@ -51,15 +52,19 @@ public class RepoCommit extends Model implements Comparable<RepoCommit> {
 
     public static SimpleDateFormat DF = new SimpleDateFormat("E MMM d HH:mm:ss yyyy Z");
 
+    @Override
+    public Object _key() {
+        return sha;
+    }
+
     public RepoCommit(final Commit gitCommit) throws ParseException {
         sha = gitCommit.getSha();
         author = gitCommit.getAuthor();
         author = author.substring(0, author.indexOf(" "));
         message = gitCommit.getMessage() == null ? "[No message]" : gitCommit.getMessage().trim();
         parseSVNRevision();
-        if (message.length() > 800) {
-            message = message.substring(0, 800);
-
+        if (message.length() > 2000) {
+            message = message.substring(0, MAX_MSG_LENGTH);
         }
         // Expecting format: Sat Dec 3 23:58:57 2011 +0000
         date = DF.parse(gitCommit.getDateString());
