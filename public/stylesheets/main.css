@@ -14,6 +14,21 @@ body, html {
 	margin: 0.5em;
 }
 
+.navBar {
+	margin: 0.5em;
+	margin-bottom: 1em;	
+}
+
+.navBar td {
+	text-align: center;
+}
+
+.programSearchResults td,th {
+	padding: 4px 16px;
+	text-align: left;
+	verical-align: top;
+}
+
 
 #titleHeader {
 	background: #FFFF99;

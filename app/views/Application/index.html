@@ -14,15 +14,18 @@
 	
 	#{if results || page > 1}
 	<div class="navBar">
-		Page: <span id="pageDisplay">${page}</span>
-		<a  id="previousLink" href="#">Previous</a>
-		<a id="nextLink" href="#" >Next</a>
+		<table>
+		<tr>
+			<td width="50px"><a  id="previousLink" href="#">Last</a></td>
+			<td width="50px">Page: <span id="pageDisplay">${page}</span></td>
+			<td width="50px"><a id="nextLink" href="#" >Next</a></tr>
+	 	</td>
 	 </div>
 	#{/if}
 	
 	#{if results}
-		<table>
-			<tr><th>Program</th><th>Authors</th><th>FCA Links</th>
+		<table class="programSearchResults">
+			<tr><th>Program</th><th>Authors</th><th>PCA Links (<code>@legacy</code>)</th>
 			#{list items:results, as:'pcaProgram' }
 	        	<tr><td><a href="@{Application.showProgram(pcaProgram.name)}">${pcaProgram.name}</a></td><td>${pcaProgram.authors}</td><td>${pcaProgram.javaLinks.size()}</td></tr>
 	    	#{/list}
