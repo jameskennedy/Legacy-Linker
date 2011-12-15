@@ -26,8 +26,18 @@ import edu.nyu.cs.javagit.api.commands.GitLogResponse.CommitFile;
 @Every("10mn")
 public class ParseRepositoryJob extends Job {
 
+    private static Boolean inProgress = Boolean.FALSE;
+
     @Override
     public void doJob() {
+        synchronized (inProgress) {
+            if (inProgress) {
+                Logger.debug("SKIP: Skipped syncing with repo since job already in progress.");
+                return;
+            }
+            inProgress = Boolean.TRUE;
+        }
+
         ImportPCAProgramsJob pImport = new ImportPCAProgramsJob();
         try {
             pImport.now().get();
