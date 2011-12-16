@@ -7,6 +7,7 @@ import models.PCAProgramClassLink;
 import models.RepoCommit;
 import models.RepoFile;
 import models.RepoFileCommit;
+import models.User;
 import play.Logger;
 
 public class RepositoryService {
@@ -35,12 +36,12 @@ public class RepositoryService {
             return;
         }
 
-        classLink.authorLinesMap = new HashMap<String, Integer>();
+        classLink.authorLinesMap = new HashMap<User, Integer>();
 
         RepoFile file = classLink.file;
 
         for (RepoFileCommit fileCommit : file.commits) {
-            String author = fileCommit.commit.author;
+            User author = fileCommit.commit.user;
             Integer commitLines = fileCommit.linesAdded + fileCommit.linesRemoved;
             Integer authorLines = classLink.authorLinesMap.get(author);
             if (null == authorLines) {

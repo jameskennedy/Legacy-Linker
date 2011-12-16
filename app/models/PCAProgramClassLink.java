@@ -20,19 +20,28 @@ import play.db.jpa.Model;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 public class PCAProgramClassLink extends Model implements Comparable<PCAProgramClassLink> {
 
-    @ManyToOne(optional = false) @Required public PCAProgram program;
+    @ManyToOne(optional = false)
+    @Required
+    public PCAProgram program;
 
-    @ManyToOne(optional = false) @Required public RepoFile file;
+    @ManyToOne(optional = false)
+    @Required
+    public RepoFile file;
 
-    @OneToMany(mappedBy = "classLink") public List<PCAProgramMethodLink> methodLinks;
+    @OneToMany(mappedBy = "classLink")
+    public List<PCAProgramMethodLink> methodLinks;
 
-    @Required @Unique("className, methodName") public String className;
+    @Required
+    @Unique("className, methodName")
+    public String className;
     public Integer lineTotal = 0;
     public Integer linkLines = 0;
 
-    @Embedded public Map<String, Integer> authorLinesMap = new HashMap<String, Integer>();
+    @Embedded
+    public Map<User, Integer> authorLinesMap = new HashMap<User, Integer>();
 
-    @Required public Boolean indirect = Boolean.FALSE;
+    @Required
+    public Boolean indirect = Boolean.FALSE;
 
     @Override
     public String toString() {
@@ -72,14 +81,13 @@ public class PCAProgramClassLink extends Model implements Comparable<PCAProgramC
         if (null == authorLinesMap) {
             return "{}";
         }
-
         StringBuffer buf = new StringBuffer("{");
         boolean first = true;
-        for (Entry<String, Integer> entry : authorLinesMap.entrySet()) {
+        for (Entry<User, Integer> entry : authorLinesMap.entrySet()) {
             if (!first) {
                 buf.append(",");
             }
-            buf.append("'" + entry.getKey() + "': " + entry.getValue());
+            buf.append("'" + entry.getKey().shortName() + "': " + entry.getValue());
             first = false;
         }
         buf.append("}");

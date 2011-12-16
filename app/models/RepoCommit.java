@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -29,21 +30,24 @@ public class RepoCommit extends GenericModel implements Comparable<RepoCommit> {
 
     @Id
     public String sha;
-    public Integer svnRevision;
-    public String svnURL;
-    public String author;
     @Required
     @Column(length = MAX_MSG_LENGTH)
     public String message;
     @Required
     public Date date;
+    public Integer svnRevision;
+    public String svnURL;
+    @Required
+    @ManyToOne
+    public User user;
+    public String author;
     @ManyToOne
     public PCAProgram program;
     public String programName;
     public Integer linesAdded;
     public Integer linesRemoved;
 
-    @OneToMany(mappedBy = "commit", orphanRemoval = true)
+    @OneToMany(mappedBy = "commit", cascade = { CascadeType.ALL })
     @OrderBy("linesAdded DESC")
     List<RepoFileCommit> files;
 
@@ -59,8 +63,20 @@ public class RepoCommit extends GenericModel implements Comparable<RepoCommit> {
 
     public RepoCommit(final Commit gitCommit) throws ParseException {
         sha = gitCommit.getSha();
-        author = gitCommit.getAuthor();
-        author = author.substring(0, author.indexOf(" "));
+
+        String author = gitCommit.getAuthor();
+        String email = null;
+        int index = author.indexOf(" ");
+        if (index != -1) {
+            email = author.substring(index + 1);
+            author = author.substring(0, index);
+        }
+        user = User.find("byRepoUserId", author).first();
+        if (null == user) {
+            user = new User(author, email);
+            user.save();
+        }
+
         message = gitCommit.getMessage() == null ? "[No message]" : gitCommit.getMessage().trim();
         parseSVNRevision();
         if (message.length() > 2000) {
@@ -101,7 +117,7 @@ public class RepoCommit extends GenericModel implements Comparable<RepoCommit> {
 
     @Override
     public String toString() {
-        return "RepoCommit [sha=" + sha + ", date=" + date + ", svnRevision=" + svnRevision + ", author=" + author
+        return "RepoCommit [sha=" + sha + ", date=" + date + ", svnRevision=" + svnRevision + ", author=" + user
                         + ", message=" + StringUtils.abbreviate(message, 20) + "]";
     }
 

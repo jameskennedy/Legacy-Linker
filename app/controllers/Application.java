@@ -11,6 +11,7 @@ import models.PCAProgram;
 import models.PCAProgramClassLink;
 import models.RepoCommit;
 import models.RepoFileCommit;
+import models.User;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -130,7 +131,7 @@ public class Application extends Controller {
         PCAProgram program = PCAProgram.findById(programName.trim().toUpperCase());
         List<PCAProgramClassLink> selectedClassLinks = program.getSelectedClassLinks(classSelection);
 
-        Map<String, Integer> programAuthorChart = AuthorshipService.createProgramAuthorChart(selectedClassLinks);
+        Map<User, Integer> programAuthorChart = AuthorshipService.createProgramAuthorChart(selectedClassLinks);
         renderJSON(programAuthorChart);
     }
 

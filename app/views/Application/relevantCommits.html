@@ -10,7 +10,7 @@
   		 		<td width="200px">Rev ${commit.svnRevision}</td>
   		 		<td width="40px" title="Lines added by commit">+ ${commit.linesAdded}</td>
   		 		<td width="40px" title="Lines removed by commit">- ${commit.linesRemoved}</td>
-  		 		<td class="commitAuthor">${commit.author}</td>
+  		 		<td class="commitAuthor">${commit.user?.getDisplayName()}</td>
   		 	</tr>
   		 </table>
   	</div>

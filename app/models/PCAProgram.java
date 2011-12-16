@@ -75,11 +75,11 @@ public class PCAProgram extends GenericModel {
 
             Logger.trace("No author update for %s", name);
         } else {
-            SortedMap<String, Integer> programAuthorChart = AuthorshipService
+            SortedMap<User, Integer> programAuthorChart = AuthorshipService
                             .createProgramAuthorChart(selectedClassLinks);
             SortedMap<Integer, String> inverseMap = new TreeMap<Integer, String>();
-            for (Entry<String, Integer> entry : programAuthorChart.entrySet()) {
-                inverseMap.put(entry.getValue(), entry.getKey());
+            for (Entry<User, Integer> entry : programAuthorChart.entrySet()) {
+                inverseMap.put(entry.getValue(), entry.getKey().shortName());
             }
             List<String> authorList = new ArrayList(inverseMap.values());
             Collections.reverse(authorList);

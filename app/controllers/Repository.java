@@ -1,6 +1,7 @@
 package controllers;
 
 import jobs.AssignAuthorsJob;
+import jobs.MoveAuthorsToUsersJob;
 import jobs.ParseRepositoryJob;
 import models.GITRepository;
 import models.PCAProgram;
@@ -63,6 +64,12 @@ public class Repository extends Controller {
      */
     public static void wipePCALinks() {
         PCALinkageService.wipeAllLinks();
+        index();
+    }
+
+    public static void deriveAllUsers() {
+        MoveAuthorsToUsersJob job = new MoveAuthorsToUsersJob();
+        promise = job.now();
         index();
     }
 

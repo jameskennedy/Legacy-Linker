@@ -7,6 +7,9 @@
 <script src="@{'/public/javascripts/jgcharts.pack.js'}" type="text/javascript"></script>
 <script type="text/javascript" src="@{'/public/javascripts/showProgram.js'}"></script>
 <script type="text/javascript">
+
+	var googleChartAPI = new jGCharts.Api();
+
 	
 	function renderAuthorChart(authorMap, target, title) {
 		$(target).html('');
@@ -14,7 +17,7 @@
 		if (!authorMap) {
 			return;
 		}
-		
+
 		if (Object.keys(authorMap).length == 0) {
 			return;
 		}
@@ -32,13 +35,12 @@
 		var pieParams = { 
 			data : data,//mandatory  
 			type : 'p3',//default bvg 
-			size : '400x100' ,
+			size : '400x100',
 			axis_labels : axis_labels
 		}
-		
-		var api = new jGCharts.Api(); 
+		 
 		jQuery('<img>') 
-		.attr('src', api.make(pieParams)) 
+		.attr('src', googleChartAPI.make(pieParams)) 
 		.appendTo(target);
 		
 		$(target).prepend("<h4>" + title + "</h4>");
@@ -50,7 +52,7 @@
 		var title = classRow.children("td.className").text();
 		$('#floatingAuthorChart').css("top", offset.top);
 		renderAuthorChart(authorMap, '#floatingAuthorChart', title);
-		$('#floatingAuthorChart').prepend('<div class="shim">&nbsp;</div>').css('display','block');;
+		$('#floatingAuthorChart').prepend('<div class="shim">&nbsp;</div>').css('display','block');
 	}
 	
 	function hideFloatingAuthorChart() {

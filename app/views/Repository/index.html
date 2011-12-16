@@ -42,4 +42,8 @@ Status: ${status}
 <form action="@{Repository.wipePCALinks()}" method="POST">
     <input type="submit" value="Wipe PCA Links" ${disableAction ? 'disabled=true' : ''}"/>
 </form>
+
+<form action="@{Repository.deriveAllUsers()}" method="POST">
+    <input type="submit" value="Generate users" ${disableAction ? 'disabled=true' : ''}"/>
+</form>
 #{/if}

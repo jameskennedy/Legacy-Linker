@@ -6,6 +6,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import models.PCAProgramClassLink;
+import models.User;
 
 public class AuthorshipService {
 
@@ -18,14 +19,14 @@ public class AuthorshipService {
      * @return SortedMap<Author, Lines added + lines removed> sorted by author
      *         user id.
      */
-    public static SortedMap<String, Integer> createProgramAuthorChart(final List<PCAProgramClassLink> selectedClassLinks) {
-        SortedMap<String, Integer> result = new TreeMap<String, Integer>();
+    public static SortedMap<User, Integer> createProgramAuthorChart(final List<PCAProgramClassLink> selectedClassLinks) {
+        SortedMap<User, Integer> result = new TreeMap<User, Integer>();
         for (PCAProgramClassLink classLink : selectedClassLinks) {
             float coverage = classLink.lineCoverage();
             // TODO: expensive to always calculate on the fly?
             RepositoryService.calculateAuthorship(classLink);
-            for (Entry<String, Integer> entry : classLink.authorLinesMap.entrySet()) {
-                String author = entry.getKey();
+            for (Entry<User, Integer> entry : classLink.authorLinesMap.entrySet()) {
+                User author = entry.getKey();
                 Integer lines = result.get(author);
                 if (null == lines) {
                     lines = 0;
