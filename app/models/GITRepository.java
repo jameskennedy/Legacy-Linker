@@ -1,9 +1,11 @@
 package models;
 
 import java.util.Date;
+import java.util.Properties;
 
 import javax.persistence.Entity;
 
+import play.Play;
 import play.data.validation.Unique;
 import play.db.jpa.Model;
 
@@ -26,7 +28,8 @@ public class GITRepository extends Model {
             return mainRepo;
         } catch (IndexOutOfBoundsException e) {
             GITRepository newRepo = new GITRepository();
-            newRepo.location = "/triad";
+            Properties playProps = Play.configuration;
+            newRepo.location = playProps.getProperty("optiusprime.git_repository");
             newRepo.save();
             return newRepo;
         }
