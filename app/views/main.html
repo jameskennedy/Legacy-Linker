@@ -11,26 +11,38 @@
     </head>
     <body>
 	    <div id="headerPanel">
-	
+	    
+			#{form @Application.index(), id:'searchForm' }
 			<div id="searchPanel">
-				#{form @Application.index(), id:'searchForm' }
-					<span class ="formLabel"> PCA Program Search:</span>
-				    <input type="text" name="programName" value="${program?.name ?: programNameNormalized}" /> 
-				    <input id="searchSubmit" type="submit" value="Search" />
-				    <input id="pageInput" type="hidden" name="page" value="${page}"/>
-				#{/form}
+				<table>
+					<tr>	
+						<td>
+							<span class ="formLabel">PCA Program Search:</span>
+						</td>
+						<td>
+						    <input type="text" name="programName" value="${program?.name ?: programNameNormalized}" /> 
+						    <input id="searchSubmit" type="submit" value="Search" />
+						    <input id="pageInput" type="hidden" name="page" value="${page}"/>
+						</td>
+					</tr>
+				</table>
 			</div>
-			<table>
-				<tr>
+			#{/form}
+			
+	    	<div id="applicationTitle">
+		    	${play.configuration['application.name']}
+		    </div>
+		    
+		    <table class="repoSummary">
+				<tr class="repoSummaryLine">
 					<td class ="formLabel">Most recent commit:</td>
 					<td class="dateCell">Rev. ${repository.svnRevision} ${repository.lastCommitDate?.since(true)} </td>
 				</tr>
-				<tr>
+				<tr class="repoSummaryLine">
 					<td class ="formLabel">First commit:</td>
 					<td  class="dateCell">${repository.earliestCommitDate?.format('MMM d, yyyy h:mm a')}</td>
 				</tr>
 			</table>
-		
 		</div>
 	
     	<div id="titleHeader">

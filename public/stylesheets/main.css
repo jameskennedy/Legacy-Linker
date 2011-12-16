@@ -4,15 +4,31 @@ body, html {
 	
 }
 
+h2 {
+	font-size: 14pt;
+}
+
 #headerPanel {
 	padding: 0.5em;
 	background: #FC4;
 }
 
+#applicationTitle {
+	color: #0000bf;
+	font-size: 22pt;
+	font-weight: bold;
+	font-family: Lucida Console, Monaco5, monospace;
+	text-shadow: 2px 2px 5px #007;
+	padding: 0.1em 1em;
+	float:left;
+}
+
 #searchPanel {
 	float:right;
-	margin: 0.5em;
+	margin: 4px 0.5em;
 }
+
+
 
 .navBar {
 	margin: 0.5em;
@@ -31,10 +47,12 @@ body, html {
 
 
 #titleHeader {
+	color: #55f;
 	background: #FFFF99;
 	padding: 0.5em;
 	vertical-align: middle;
-	font-size: 20pt;
+	text-align:center;
+	font-size: 14pt;
 	font-weight: bold;
 }
 
@@ -46,11 +64,21 @@ body, html {
 .formLabel {
 	font-weight: bold;
 	text-align: right;
-	padding-right: 1em;
+	padding-right: 10px;
+	min-width: 100px;
+}
+
+.repoSummary {
+	padding-left: 2em;
+}
+
+.repoSummaryLine {
+	font-size: 80%;	
 }
 
 .dateCell {
 	font-family: courier;
 	font-size: 80%;
+	min-width: 100px;
 	
 }
