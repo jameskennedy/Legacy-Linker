@@ -83,7 +83,7 @@ public class ParseRepositoryJob extends Job {
             }
 
             // TODO: DEBUG
-            gitLogOptions.setOptLimitCommitMax(true, 200);
+            // gitLogOptions.setOptLimitCommitMax(true, 200);
 
             List<Commit> commitList = null;
             try {
