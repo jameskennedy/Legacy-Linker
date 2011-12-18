@@ -2,13 +2,13 @@
 
 require:
     - play -> crud
-    - javagit -> javagit 0.2.0-SNAPSHOT
+    - provided -> javagit 0.2.0-SNAPSHOT
+    - provided -> javaparser 1.0.8
     
 # My custom repositories
-repositories:
-    
-    - local:
-        type:       local
-        artifact:   "/Users/james.kennedy/.m2/repository/javagit/javagit/0.2.0-SNAPSHOT/[module]-[revision].[ext]"
-        contains:
-            - javagit -> *
+repositories: 
+   - provided: 
+       type:       local 
+       artifact:   "${application.path}/jar/[module]-[revision].jar" 
+       contains: 
+         - provided -> * 
