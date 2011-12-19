@@ -36,8 +36,9 @@ import models.RepoCommit;
 import models.RepoFile;
 import play.Logger;
 
-public class PCALinkageService {
+public class LegacyLinkageService {
 
+    private static final int MAX_PROCESSED_PER_JOB = 500;
     private static Pattern LEGACY_PROGRAM = Pattern.compile("@legacy[\\s]*([a-zA-Z][a-zA-Z0-9]{2,7})(\\s|$)");
     private static Pattern COMMIT_PROGRAM = Pattern.compile("(^|\\W)([A-Z][A-Z0-9]{2,7})(\\W|$)");
 
@@ -58,7 +59,9 @@ public class PCALinkageService {
         PCAProgramClassLink.em().setFlushMode(FlushModeType.COMMIT);
 
         for (RepoFile repoFile : filesToLink) {
-            filesProcessed++;
+            if (filesProcessed++ > MAX_PROCESSED_PER_JOB) {
+                continue;
+            }
 
             // Drop all existing links
             PCAProgramClassLink.delete("file = ?", repoFile);

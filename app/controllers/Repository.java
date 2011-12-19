@@ -7,7 +7,7 @@ import models.GITRepository;
 import models.PCAProgram;
 import play.libs.F.Promise;
 import play.mvc.Controller;
-import services.PCALinkageService;
+import services.LegacyLinkageService;
 import services.RepositoryService;
 
 /**
@@ -63,7 +63,7 @@ public class Repository extends Controller {
      * Completely erase all PCA linkage data and data depending on it
      */
     public static void wipePCALinks() {
-        PCALinkageService.wipeAllLinks();
+        LegacyLinkageService.wipeAllLinks();
         index();
     }
 

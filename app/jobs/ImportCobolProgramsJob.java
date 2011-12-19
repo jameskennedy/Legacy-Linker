@@ -12,14 +12,23 @@ import play.Logger;
 import play.Play;
 import play.jobs.Job;
 
-public class ImportPCAProgramsJob extends Job {
+public class ImportCobolProgramsJob extends Job<Boolean> {
+
+    /**
+     * Here you do the job and return a result
+     */
+    @Override
+    public Boolean doJobWithResult() throws Exception {
+        doJob();
+        return Boolean.TRUE;
+    }
 
     @Override
     public void doJob() {
         Properties p = Play.configuration;
-        String legacyPath = p.getProperty("optiusprime.legacy_src_dir");
+        String legacyPath = p.getProperty("application.legacy_src_dir");
         if (null == legacyPath) {
-            Logger.error("A legacy source dir has not been set. Use 'optiusprime.legacy_src_dir' in conf/application.conf");
+            Logger.error("A legacy source dir has not been set. Use 'application.legacy_src_dir' in conf/application.conf");
             return;
         }
 
@@ -32,7 +41,7 @@ public class ImportPCAProgramsJob extends Job {
         Logger.info("START: Searching for legacy COBOL programs in " + legacyPath);
 
         if (rootDir == null || !rootDir.exists() || !rootDir.isDirectory()) {
-            throw new IllegalArgumentException(rootDir + " is not anexisting root direcotry.");
+            throw new IllegalArgumentException(rootDir + " is not an existing root directory.");
         }
 
         Logger.debug("Loading Cobol programs to db...");
