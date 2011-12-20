@@ -2,9 +2,6 @@
 #{set title:'GIT Repository Configuration' /}
 
 %{ 
-	repoName = currentRepository == null ? 'NA' : currentRepository.name;
-	repoPath = currentRepository == null ? '' : currentRepository.location;
-	lastCommit = currentRepository == null ? 'NA' : currentRepository.lastCommitParsed;
 	disableAction = status == 'Working...';
 }%
 
@@ -16,8 +13,9 @@
 <h3>Repository</h3>
 <form action="@{Repository.changeRepository()}" method="POST">
 	<table>
-   		<tr><td>Name:</td><td><input type="text" name="repositoryName" value="${repoName}" /></td></tr> 
-    	<tr><td>Path:</td><td><input type="text" name="repositoryPath" value="${repoPath}" /></td></tr>
+   		<tr><td>Name:</td><td><input type="text" name="repositoryName" value="${repository?.name}" /></td></tr> 
+    	<tr><td>Path:</td><td><input type="text" name="repositoryPath" value="${repository?.location}" /></td></tr>
+    	<tr><td>Last commit:</td><td><input type="text" name="lastCommit" value="${repository?.lastCommitParsed}" /></td></tr>
     </table>
     <input type="submit" value="Change" ${disableAction ? 'disabled=true' : ''}"/>
 </form>

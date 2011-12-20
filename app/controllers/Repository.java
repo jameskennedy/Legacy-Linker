@@ -2,7 +2,7 @@ package controllers;
 
 import jobs.AssignAuthorsJob;
 import jobs.MoveAuthorsToUsersJob;
-import jobs.ParseRepositoryJob;
+import jobs.SyncRepositoryJob;
 import models.GITRepository;
 import models.PCAProgram;
 import play.libs.F.Promise;
@@ -26,19 +26,22 @@ public class Repository extends Controller {
         render(status, repository);
     }
 
-    public static void changeRepository(final String repositoryPath, final String repositoryName) {
+    public static void changeRepository(final String repositoryPath, final String repositoryName, String lastCommit) {
         GITRepository mainRepository = GITRepository.getMainRepository();
 
         mainRepository.location = repositoryPath;
         mainRepository.name = repositoryName;
-        mainRepository.lastCommitParsed = null;
+        if (null != lastCommit && lastCommit.equals("")) {
+            lastCommit = null;
+        }
+        mainRepository.lastCommitParsed = lastCommit;
         mainRepository.save();
 
         index();
     }
 
     public static void syncWithRepository() {
-        ParseRepositoryJob parseJob = new ParseRepositoryJob();
+        SyncRepositoryJob parseJob = new SyncRepositoryJob();
         promise = parseJob.now();
         index();
     }

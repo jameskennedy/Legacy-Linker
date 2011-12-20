@@ -31,6 +31,7 @@ public class GITRepository extends Model {
             Properties playProps = Play.configuration;
             newRepo.location = playProps.getProperty("optiusprime.git_repository");
             newRepo.save();
+            newRepo.em().flush();
             return newRepo;
         }
     }

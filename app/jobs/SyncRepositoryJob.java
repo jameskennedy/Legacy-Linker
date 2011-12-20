@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import javax.persistence.FlushModeType;
 
 import models.GITRepository;
+import models.PCAProgramClassLink;
 import models.RepoCommit;
 import models.RepoFile;
 import models.RepoFileCommit;
@@ -25,8 +26,9 @@ import edu.nyu.cs.javagit.api.commands.GitLogResponse.CommitFile;
 
 @OnApplicationStart(async = true)
 @Every("10mn")
-public class ParseRepositoryJob extends Job {
+public class SyncRepositoryJob extends Job {
 
+    private static final int MAX_COMMITS_PER_RUN = 500;
     private static Boolean inProgress = Boolean.FALSE;
 
     @Override
@@ -116,13 +118,8 @@ public class ParseRepositoryJob extends Job {
                         repo.lastCommitDate = processed.date;
                     }
 
-                    if (newCommits % 500 == 0) {
-                        logPerformance(startTime, newCommits);
-
-                        RepoCommit.em().getTransaction().commit();
-                        RepoCommit.em().getTransaction().begin();
-                        RepoCommit.em().flush();
-                        RepoCommit.em().clear();
+                    if (newCommits % MAX_COMMITS_PER_RUN == 0) {
+                        break;
                     }
                 } catch (ParseException e) {
                     Logger.error(e, "Failed to parse commit %s. Ending sync at this point.", commit.getSha());
@@ -141,10 +138,15 @@ public class ParseRepositoryJob extends Job {
 
             logPerformance(startTime, newCommits);
 
-            Logger.info("STOP Repository sync complete.");
+            Logger.info("STOP Repository sync finished after processing %d commits.", newCommits);
 
             // Kick-off the linkage job
             PCALinkageJob linkJob = new PCALinkageJob();
+
+            // FIXME: Why does this commit seem necessary for linkJob to see
+            // changes?
+            PCAProgramClassLink.em().getTransaction().commit();
+
             linkJob.now();
         } finally {
             inProgress = Boolean.FALSE;
@@ -189,7 +191,7 @@ public class ParseRepositoryJob extends Job {
                     repoFile = new RepoFile(repo, path);
                 }
 
-                repoFile.linkUpdateNeeded = true;
+                repoFile.linkUpdateNeeded = Boolean.TRUE;
                 repoFile.save();
 
                 // Associate the commit
