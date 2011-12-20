@@ -1,10 +1,13 @@
 package jobs;
 
+import java.util.List;
+
+import models.RepoFile;
 import play.Logger;
 import play.jobs.Job;
-import services.PCALinkageService;
+import services.LegacyLinkageService;
 
-public class PCALinkageJob extends Job {
+public class LegacyLinkageJob extends Job {
 
     private static Boolean inProgress = Boolean.FALSE;
 
@@ -20,12 +23,19 @@ public class PCALinkageJob extends Job {
 
         try {
             Logger.info("START: Updating PCA links...");
-            int filesProcessed = PCALinkageService.updateFileLinkage();
+            int filesProcessed = LegacyLinkageService.updateFileLinkage();
             Logger.info("STOP: Updated PCA links for %d files.", filesProcessed);
-
-            new AssignAuthorsJob().now();
         } finally {
             inProgress = Boolean.FALSE;
+        }
+
+        List<RepoFile> filesToLink = RepoFile.find("byLinkUpdateNeeded", Boolean.TRUE).fetch();
+        if (!filesToLink.isEmpty()) {
+            // Reschedule self while there are updates left to be done
+            this.now();
+        } else {
+            Logger.info("STOP: All programs have been linked.");
+            new AssignAuthorsJob().now();
         }
 
     }

@@ -22,7 +22,7 @@ import play.data.validation.Required;
 import play.db.jpa.Transactional;
 import play.mvc.Controller;
 import services.AuthorshipService;
-import services.PCALinkageService;
+import services.LegacyLinkageService;
 import services.RepositoryService;
 
 /**
@@ -95,7 +95,7 @@ public class Application extends Controller {
             RepositoryService.calculateAuthorship(classLink);
         }
 
-        List<Long> classSelection = PCALinkageService.defaultClassSelection(linkList);
+        List<Long> classSelection = LegacyLinkageService.defaultClassSelection(linkList);
 
         render(repository, program, linkList, classSelection);
     }

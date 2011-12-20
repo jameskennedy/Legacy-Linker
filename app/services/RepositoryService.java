@@ -14,7 +14,7 @@ public class RepositoryService {
 
     public static void wipeRepositoryData() {
         // Wipe dependent data
-        PCALinkageService.wipeAllLinks();
+        LegacyLinkageService.wipeAllLinks();
 
         RepoFileCommit.deleteAll();
         RepoFile.deleteAll();
@@ -27,10 +27,15 @@ public class RepositoryService {
         Logger.info("Wiped all repository data.");
     }
 
-    // TODO: Use exactly the lines covered under @legacy for given program
-    // git blame -p -w -C -M -l -L1,100
-    // triadServicesEJB/ejbModule/com/sasktelinternational/triad/services/common/serviceorder/SignoffCabdisUtilService.java
-
+    /**
+     * Tally the number of lines touched for each author. The line score is
+     * number of lines added + number of lines removed.
+     * 
+     * TODO: More accurately use exactly the lines covered under @legacy for the
+     * given program e.g. git blame -p -w -C -M -l -L1,100
+     * 
+     * @param classLink
+     */
     public static void calculateAuthorship(final PCAProgramClassLink classLink) {
         if (classLink.authorLinesMap != null) {
             return;

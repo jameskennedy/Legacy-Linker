@@ -16,7 +16,7 @@ import org.hibernate.util.EqualsHelper;
 import play.Logger;
 import play.db.jpa.GenericModel;
 import services.AuthorshipService;
-import services.PCALinkageService;
+import services.LegacyLinkageService;
 
 @Entity
 public class PCAProgram extends GenericModel {
@@ -63,7 +63,7 @@ public class PCAProgram extends GenericModel {
 
     public void calculateAuthors() {
         // FIXME: Doing getClassLinks() query twice here
-        List<Long> classSelection = PCALinkageService.defaultClassSelection(getClassLinks());
+        List<Long> classSelection = LegacyLinkageService.defaultClassSelection(getClassLinks());
         List<PCAProgramClassLink> selectedClassLinks = getSelectedClassLinks(classSelection);
         String newAuthors = null;
         if (selectedClassLinks.isEmpty()) {

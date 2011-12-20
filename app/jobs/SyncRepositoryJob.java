@@ -17,13 +17,25 @@ import play.Logger;
 import play.jobs.Every;
 import play.jobs.Job;
 import play.jobs.OnApplicationStart;
-import services.PCALinkageService;
+import play.libs.F.Promise;
+import services.LegacyLinkageService;
 import edu.nyu.cs.javagit.api.DotGit;
 import edu.nyu.cs.javagit.api.JavaGitException;
 import edu.nyu.cs.javagit.api.commands.GitLogOptions;
 import edu.nyu.cs.javagit.api.commands.GitLogResponse.Commit;
 import edu.nyu.cs.javagit.api.commands.GitLogResponse.CommitFile;
 
+/**
+ * This is the main background job that kicks off all the other jobs. It
+ * initially ensures that all legacy programs have been imported with
+ * {@link ImportCobolProgramsJob}. It then does the work of pulling in all not
+ * yet processed commits from the repository and recording all relevant info to
+ * the db. It then kicks off {@link LegacyLinkageJob} to analyse the repository
+ * .java source code.
+ * 
+ * @author james.kennedy
+ * 
+ */
 @OnApplicationStart(async = true)
 @Every("10mn")
 public class SyncRepositoryJob extends Job {
@@ -43,9 +55,14 @@ public class SyncRepositoryJob extends Job {
 
         try {
 
-            ImportPCAProgramsJob pImport = new ImportPCAProgramsJob();
+            ImportCobolProgramsJob pImport = new ImportCobolProgramsJob();
             try {
-                pImport.now().get(60, TimeUnit.SECONDS);
+                Promise<Boolean> promise = pImport.now();
+                Boolean result = promise.get(60, TimeUnit.SECONDS);
+                if (result == null || !result) {
+                    Logger.error("STOP: Cannot synchronize with repository without legacy programs loaded.");
+                    return;
+                }
             } catch (Exception e) {
                 Logger.error(e, "STOP: Cannot synchronize with repository.");
                 return;
@@ -78,7 +95,6 @@ public class SyncRepositoryJob extends Job {
             gitLogOptions.setOptOrderingReverse(true);
             gitLogOptions.setOptFileDetails(true);
 
-            // TODO: How come this doesn't work?
             if (repo.lastCommitParsed != null) {
                 Logger.info("Only fetching changes after " + repo.lastCommitParsed);
                 gitLogOptions.setOptLimitCommitSince(true, repo.lastCommitParsed);
@@ -141,12 +157,11 @@ public class SyncRepositoryJob extends Job {
             Logger.info("STOP Repository sync finished after processing %d commits.", newCommits);
 
             // Kick-off the linkage job
-            PCALinkageJob linkJob = new PCALinkageJob();
+            LegacyLinkageJob linkJob = new LegacyLinkageJob();
 
             // FIXME: Why does this commit seem necessary for linkJob to see
             // changes?
             PCAProgramClassLink.em().getTransaction().commit();
-
             linkJob.now();
         } finally {
             inProgress = Boolean.FALSE;
@@ -204,7 +219,7 @@ public class SyncRepositoryJob extends Job {
             }
         }
 
-        PCALinkageService.linkCommitToPrograms(repoCommit);
+        LegacyLinkageService.linkCommitToPrograms(repoCommit);
 
         return repoCommit;
     }

@@ -29,7 +29,7 @@ public class GITRepository extends Model {
         } catch (IndexOutOfBoundsException e) {
             GITRepository newRepo = new GITRepository();
             Properties playProps = Play.configuration;
-            newRepo.location = playProps.getProperty("optiusprime.git_repository");
+            newRepo.location = playProps.getProperty("application.git_repository");
             newRepo.save();
             newRepo.em().flush();
             return newRepo;

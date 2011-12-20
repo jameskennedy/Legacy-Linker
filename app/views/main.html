@@ -17,7 +17,7 @@
 				<table>
 					<tr>	
 						<td>
-							<span class ="formLabel">PCA Program Search:</span>
+							<span class ="formLabel">Legacy program search:</span>
 						</td>
 						<td>
 						    <input type="text" name="programName" value="${program?.name ?: programNameNormalized}" /> 
@@ -36,7 +36,7 @@
 		    <table class="repoSummary">
 				<tr class="repoSummaryLine">
 					<td class ="formLabel">Most recent commit:</td>
-					<td class="dateCell">Rev. ${repository.svnRevision} ${repository.lastCommitDate?.since(true)} </td>
+					<td class="dateCell">${repository.svnRevision ? 'Rev. ' + repository.svnRevision : ''} ${repository.lastCommitDate?.since(true)} </td>
 				</tr>
 				<tr class="repoSummaryLine">
 					<td class ="formLabel">First commit:</td>
